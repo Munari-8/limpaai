@@ -35,7 +35,7 @@ export default function WelcomeScreen({ navigation }){
             </View>
 
             <View style={styles.footer}>
-                <Text style={styles.text2}>Combatendo a poluição urbana com a união entre as pessoas</Text>
+                <Text style={[styles.text2, {fontSize: 15}]}>Combatendo a poluição urbana com a união entre as pessoas</Text>
             </View>
         </View>
     );
@@ -50,7 +50,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'flex-start',
 
-        paddingVertical: '10%'
+        paddingTop: '5%',
+        paddingBottom: '5%'
     },
     top: {
         width: '100%' ,
@@ -69,7 +70,7 @@ const styles = StyleSheet.create({
     footer: {
         width: '100%',
         alignItems: 'center',
-        paddingHorizontal: '10%'
+        paddingHorizontal: '8%'
     },
 
     // Texto

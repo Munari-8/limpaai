@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Platform } from 'react-native';
+import React, { use, useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import * as Yup from 'yup';
@@ -19,6 +19,8 @@ const signupSchema = Yup.object().shape({
         .required('E-mail é obrigatório'),
 
     birthDate: Yup.date()
+        .transform((value, originalValue) => originalValue === '' ? null : value)
+        .nullable()
         .max(new Date(), 'Data de nascimento inválida')
         .required('Data de nascimento é obrigatória'),
 
@@ -31,7 +33,7 @@ const signupSchema = Yup.object().shape({
         .required('Confirmação de senha é obrigatória')
 });
 
-export default function SignUpScreen() {
+export default function SignUpScreen({ navigation }) {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -60,21 +62,33 @@ export default function SignUpScreen() {
 
     const formattedData = formData.birthDate ? formData.birthDate.toLocaleDateString('pt-BR') : '';
 
-    // Validação
+    // Validação dos inputs do formulário
+    const [formErrors, setFormErrors] = useState({});
+    
     const handleSignUp = async() => {
         try {
-            await signupSchema.validate(formData, { abortEarly: false });
+            setFormErrors({});
 
-            alert('GAMES');
+            await signupSchema.validate(formData, { abortEarly: false });
+            navigation.navigate('Home')
         } catch (error) {
             if (error instanceof Yup.ValidationError) {
-                alert(error.errors[0]);
+                const errors = {};
+
+                error.inner.forEach(err => {
+                    errors[err.path] = err.message;
+                });
+                setFormErrors(errors);
             }
         }
     };
 
     return (
-        <View style={styles.container}>
+        <ScrollView
+            style={styles.scrollWrapper}
+            contentContainerStyle={styles.container}
+            showsVerticalScrollIndicator={false}
+        >
             <View style={styles.top}>
                 <LogoTitle text='CRIAR CONTA'/>
             </View>
@@ -85,6 +99,7 @@ export default function SignUpScreen() {
                     placeholder={'Digite seu nome completo'}
                     value={formData.name}
                     setValue={(text) => handleInputChange('name', text)}
+                    error={formErrors.name}
                 />
 
                 <Text style={styles.text1}>E-mail</Text>
@@ -92,6 +107,7 @@ export default function SignUpScreen() {
                     placeholder={'Digite seu e-mail'}
                     value={formData.email}
                     setValue={(text) => handleInputChange('email', text)}
+                    error={formErrors.email}
                 />
 
                 <Text style={styles.text1}>Data de nascimento</Text>
@@ -102,10 +118,11 @@ export default function SignUpScreen() {
                 >
                     <View pointerEvents='none' style={{ width: '100%', alignItems: 'center' }}>
                         <FormInput
-                            placeholder={'Insira sua data de nascimento'}
+                            placeholder={'Selecione sua data de nascimento'}
                             value={formattedData}
                             setValue={() => {}}
                             editable={false}
+                            error={formErrors.birthDate}
                         />
                     </View>
                 </TouchableOpacity>
@@ -126,6 +143,7 @@ export default function SignUpScreen() {
                     value={formData.password}
                     setValue={(text) => handleInputChange('password', text)}
                     secureTextEntry={true}
+                    error={formErrors.password}
                 />
 
                 <Text style={styles.text1}>Confirmar senha</Text>
@@ -134,6 +152,7 @@ export default function SignUpScreen() {
                     value={formData.confirmPassword}
                     setValue={(text) => handleInputChange('confirmPassword', text)}
                     secureTextEntry={true}
+                    error={formErrors.confirmPassword}
                 />
 
                 <View style={{marginTop: '9%'}}></View>
@@ -145,16 +164,20 @@ export default function SignUpScreen() {
             </View>
 
             <View style={styles.footer}>
-                <Text style={styles.text2}>Combatendo a poluição urbana com a união entre as pessoas</Text>
+                <Text style={[styles.text2, {fontSize: 15}]}>Combatendo a poluição urbana com a união entre as pessoas</Text>
             </View>
-        </View>
+        </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
     // View
-    container: {
+    scrollWrapper: {
         flex: 1,
+        backgroundColor: Colors.background
+    },
+    container: {
+        flexGrow: 1,
         backgroundColor: Colors.background,
 
         alignItems: 'center',
@@ -168,7 +191,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
 
         paddingTop: '20%',
-        marginTop: '10%'
+        marginTop: '5%'
     },
     bottom: {
         width: '100%',
@@ -180,7 +203,7 @@ const styles = StyleSheet.create({
     footer: {
         width: '100%',
         alignItems: 'center',
-        paddingHorizontal: '10%'
+        paddingHorizontal: '8%'
     },
 
     // Text
@@ -189,8 +212,8 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: Colors.greenLA2,
 
-        marginBottom: 6,
-        marginTop: 8
+        marginBottom: 4,
+        marginTop: 6
     },
     text2: {
         fontFamily: Fonts.light,
