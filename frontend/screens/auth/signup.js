@@ -5,10 +5,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Yup from 'yup';
 
 // Componentes locais
-import Button from '../components/button';
-import { Colors, Fonts } from '../components/theme';
-import LogoTitle from '../components/logoTitle';
-import FormInput from '../components/FormInput';
+import Button from '../../components/button';
+import { Colors, Fonts } from '../../components/theme';
+import LogoTitle from '../../components/logoTitle';
+import FormInput from '../../components/FormInput';
 
 const signupSchema = Yup.object().shape({
     name: Yup.string()
@@ -70,7 +70,10 @@ export default function SignUpScreen({ navigation }) {
             setFormErrors({});
 
             await signupSchema.validate(formData, { abortEarly: false });
-            navigation.navigate('Home')
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Home' }]
+            });
         } catch (error) {
             if (error instanceof Yup.ValidationError) {
                 const errors = {};
@@ -156,6 +159,7 @@ export default function SignUpScreen({ navigation }) {
                 />
 
                 <View style={{marginTop: '9%'}}></View>
+                
                 <Button
                     text='Criar conta'
                     color={Colors.greenLA1}

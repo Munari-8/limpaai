@@ -4,7 +4,7 @@ import { StyleSheet, TextInput, Text, View } from "react-native"
 // Componentes locais
 import { Colors, Fonts } from "./theme"
 
-export default function FormInput({ placeholder, value, setValue, secureTextEntry = false, editable = true, error }) {
+export default function FormInput({ placeholder, value, setValue, secureTextEntry = false, editable = true, error, ...rest }) {
     const isPlaceholderActive = value === '';
 
     return (
@@ -19,6 +19,7 @@ export default function FormInput({ placeholder, value, setValue, secureTextEntr
                 onChangeText={setValue}
                 secureTextEntry={secureTextEntry}
                 editable={editable}
+                {...rest}
            />
             {error && <Text style={styles.errorText}>{error}</Text>}
         </View>

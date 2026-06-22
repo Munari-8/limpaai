@@ -22,15 +22,15 @@ export default function LogoTitle({ text }) {
 
 const styles = StyleSheet.create({
     logo: {
-        width: 150,
-        height: 150,
+        width: 120,
+        height: 120,
 
         alignItems: 'center',
         justifyContent: 'center',
     },
     text: {
         fontFamily: Fonts.condensedBlack,
-        fontSize: 48,
+        fontSize: 40,
 
         position: 'absolute',
         textAlign: 'center',
@@ -39,8 +39,8 @@ const styles = StyleSheet.create({
         left: -125,
         right: -125,
 
-        height: 150,
-        lineHeight: 150,
+        height: 120,
+        lineHeight: 120,
     },
     logoBg: {
         width: '100%',

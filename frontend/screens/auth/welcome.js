@@ -4,8 +4,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 
 // Componentes locais
-import Button from '../components/button';
-import { Colors, Fonts } from '../components/theme';
+import Button from '../../components/button';
+import { Colors, Fonts } from '../../components/theme';
 
 export default function WelcomeScreen({ navigation }){
     return (
@@ -14,7 +14,7 @@ export default function WelcomeScreen({ navigation }){
                 <Text style={styles.text1}>BEM-VINDO(A) AO</Text>
 
                 <Image
-                    source={require('../assets/limpaai-logo.svg')}
+                    source={require('../../assets/limpaai-logo.svg')}
                     style={styles.logo}
                 />
             </View>
