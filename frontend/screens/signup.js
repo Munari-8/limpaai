@@ -35,7 +35,7 @@ export default function SignUpScreen() {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        birthDate: new Date(),
+        birthDate: '',
         password: '',
         confirmPassword: ''
     });
@@ -51,14 +51,14 @@ export default function SignUpScreen() {
     const [showPicker, setShowPicker] = useState(false);
 
     const onChangeDate = (event, selectedDate) => {
-        const currentDate = selectedDate || formData.birthDate;
-
         setShowPicker(false);
 
-        handleInputChange('birthDate', currentDate);
+        if (selectedDate) {
+            handleInputChange('birthDate', selectedDate);
+        }
     };
 
-    const formattedData = formData.birthDate.toLocaleDateString('pt-BR');
+    const formattedData = formData.birthDate ? formData.birthDate.toLocaleDateString('pt-BR') : '';
 
     // Validação
     const handleSignUp = async() => {
@@ -90,7 +90,7 @@ export default function SignUpScreen() {
                 <Text style={styles.text1}>E-mail</Text>
                 <FormInput
                     placeholder={'Digite seu e-mail'}
-                    value={formData.name}
+                    value={formData.email}
                     setValue={(text) => handleInputChange('email', text)}
                 />
 
@@ -98,19 +98,21 @@ export default function SignUpScreen() {
                 <TouchableOpacity
                     onPress={() => setShowPicker(true)}
                     style={{ width: '100%', alignItems: 'center' }}
+                    activeOpacity={0.7}
                 >
                     <View pointerEvents='none' style={{ width: '100%', alignItems: 'center' }}>
                         <FormInput
                             placeholder={'Insira sua data de nascimento'}
                             value={formattedData}
                             setValue={() => {}}
+                            editable={false}
                         />
                     </View>
                 </TouchableOpacity>
 
                 {showPicker && (
                     <DateTimePicker
-                        value={formData.birthDate}
+                        value={formData.birthDate || new Date()}
                         mode='date'
                         display='default'
                         onChange={onChangeDate}

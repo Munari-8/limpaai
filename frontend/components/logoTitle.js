@@ -1,5 +1,7 @@
 import React from "react"
-import { StyleSheet, View, Image, Text } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
+
+import { Image } from 'expo-image';
 
 // Componentes locais
 import { Colors, Fonts } from '../components/theme';
@@ -10,7 +12,7 @@ export default function LogoTitle({ text }) {
             <Image
                 source={require('../assets/limpaai-isotipo.svg')}
                 style={styles.logoBg}
-                resizeMode='contain'
+                contentFit='contain'
             />
             
             <Text style={styles.text}>{text}</Text>
