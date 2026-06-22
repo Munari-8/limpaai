@@ -5,9 +5,11 @@ import { StyleSheet, TextInput } from "react-native"
 import { Colors, Fonts } from "./theme"
 
 export default function FormInput({ placeholder, value, setValue, secureTextEntry = false }) {
+    const isPlaceholderActive = value === '';
+
     return (
         <TextInput
-            style={styles.input}
+            style={[styles.input, {fontFamily: isPlaceholderActive ? Fonts.light : Fonts.regular}]}
             placeholder={placeholder}
             value={value}
             onChangeText={setValue}
@@ -21,11 +23,10 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.formInputBg,
 
         padding: 8,
+        paddingHorizontal: 16,
         width: '75%',
         borderRadius: 100,
 
-        justifyContent: 'center',
-
-        fontFamily: Fonts.light
+        justifyContent: 'center'
     }
 })

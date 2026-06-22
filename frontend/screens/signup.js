@@ -1,6 +1,6 @@
-import React from 'react';
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import * as Yup from 'yup';
 
@@ -47,6 +47,20 @@ export default function SignUpScreen() {
         });
     };
 
+    // Calendário
+    const [showPicker, setShowPicker] = useState(false);
+
+    const onChangeDate = (event, selectedDate) => {
+        const currentDate = selectedDate || formData.birthDate;
+
+        setShowPicker(false);
+
+        handleInputChange('birthDate', currentDate);
+    };
+
+    const formattedData = formData.birthDate.toLocaleDateString('pt-BR');
+
+    // Validação
     const handleSignUp = async() => {
         try {
             await signupSchema.validate(formData, { abortEarly: false });
@@ -76,16 +90,33 @@ export default function SignUpScreen() {
                 <Text style={styles.text1}>E-mail</Text>
                 <FormInput
                     placeholder={'Digite seu e-mail'}
-                    value={formData.email}
+                    value={formData.name}
                     setValue={(text) => handleInputChange('email', text)}
                 />
 
                 <Text style={styles.text1}>Data de nascimento</Text>
-                <FormInput
-                    placeholder={'Insira sua data de nascimento'}
-                    value={formData.birthDate}
-                    setValue={(text) => handleInputChange('birthDate', text)}
-                />
+                <TouchableOpacity
+                    onPress={() => setShowPicker(true)}
+                    style={{ width: '100%', alignItems: 'center' }}
+                >
+                    <View pointerEvents='none' style={{ width: '100%', alignItems: 'center' }}>
+                        <FormInput
+                            placeholder={'Insira sua data de nascimento'}
+                            value={formattedData}
+                            setValue={() => {}}
+                        />
+                    </View>
+                </TouchableOpacity>
+
+                {showPicker && (
+                    <DateTimePicker
+                        value={formData.birthDate}
+                        mode='date'
+                        display='default'
+                        onChange={onChangeDate}
+                        maximumDate={new Date()}
+                    />
+                )}
 
                 <Text style={styles.text1}>Senha</Text>
                 <FormInput
@@ -103,11 +134,16 @@ export default function SignUpScreen() {
                     secureTextEntry={true}
                 />
 
+                <View style={{marginTop: '9%'}}></View>
                 <Button
                     text='Criar conta'
                     color={Colors.greenLA1}
                     onPress={handleSignUp}
                 />
+            </View>
+
+            <View style={styles.footer}>
+                <Text style={styles.text2}>Combatendo a poluição urbana com a união entre as pessoas</Text>
             </View>
         </View>
     );
@@ -122,13 +158,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
 
-        paddingVertical: '10%'
+        paddingTop: '5%',
+        paddingBottom: '5%'
     },
     top: {
         width: '100%' ,
         alignItems: 'center',
 
-        paddingTop: '25%',
+        paddingTop: '20%',
         marginTop: '10%'
     },
     bottom: {
@@ -148,6 +185,18 @@ const styles = StyleSheet.create({
     text1: {
         fontFamily: Fonts.bold,
         fontSize: 16,
-        color: Colors.greenLA2
+        color: Colors.greenLA2,
+
+        marginBottom: 6,
+        marginTop: 8
+    },
+    text2: {
+        fontFamily: Fonts.light,
+        fontSize: 16,
+
+        textAlign: 'center',
+
+        marginBottom: 8,
+        marginTop: 16
     }
 });
