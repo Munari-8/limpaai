@@ -12,8 +12,12 @@ import { useFonts, Roboto_300Light, Roboto_400Regular, Roboto_700Bold, RobotoCon
 import WelcomeScreen from './screens/auth/welcome';
 import SignUpScreen from './screens/auth/signup';
 import LoginScreen from './screens/auth/login';
+
+import PasswordRecoveryEmailScreen from './screens/passwordRecovery/passwordRecoveryEmail';
+import PasswordRecoveryCodeScreen from './screens/passwordRecovery/passwordRecoveryCode';
+
 import HomeScreen from './screens/home';
-import PasswordRecoveryScreen from './screens/passwordRecovery';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -42,7 +46,11 @@ export default function App() {
 
         <Stack.Screen name='Login' component={LoginScreen}/>
 
-        <Stack.Screen name='PasswordRecovery' component={PasswordRecoveryScreen}/>
+
+        <Stack.Screen name='PasswordRecoveryEmail' component={PasswordRecoveryEmailScreen}/>
+
+        <Stack.Screen name='PasswordRecoveryCode' component={PasswordRecoveryCodeScreen}/>
+
 
         <Stack.Screen name='Home' component={HomeScreen}/>
       </Stack.Navigator>

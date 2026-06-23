@@ -4,10 +4,10 @@ import { StyleSheet, View, Text } from "react-native";
 import * as Yup from 'yup';
 
 // Componentes locais
-import { Colors, Fonts } from "../components/theme";
-import LogoTitle from "../components/logoTitle";
-import FormInput from "../components/FormInput";
-import Button from "../components/button";
+import { Colors, Fonts } from "../../components/theme";
+import LogoTitle from "../../components/logoTitle";
+import FormInput from "../../components/FormInput";
+import Button from "../../components/button";
 
 const recoverySchema = Yup.object().shape({
     email: Yup.string()
@@ -15,7 +15,7 @@ const recoverySchema = Yup.object().shape({
         .required('Digite seu e-mail')
 });
 
-export default function PasswordRecoveryScreen({ navigation }) {
+export default function PasswordRecoveryEmailScreen({ navigation }) {
     const [email, setEmail] = useState('');
     const [emailError, setEmailError] = useState('');
 
@@ -26,7 +26,7 @@ export default function PasswordRecoveryScreen({ navigation }) {
 
             await recoverySchema.validate({ email }, { abortEarly: false });
 
-            alert('games');
+            navigation.navigate('PasswordRecoveryCode')
         } catch (error) {
             if (error instanceof Yup.ValidationError) {
                 setEmailError(error.inner[0].message);

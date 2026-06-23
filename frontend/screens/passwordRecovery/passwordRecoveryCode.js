@@ -1,41 +1,39 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import React, { useState } from "react";
+import { StyleSheet, View, Text } from "react-native";
 
 // Componentes locais
-import Button from '../../components/button';
-import { Colors, Fonts } from '../../components/theme';
-import LogoTitle from '../../components/logoTitle';
-import FormInput from '../../components/FormInput';
+import { Colors, Fonts } from "../../components/theme";
+import LogoTitle from "../../components/logoTitle";
+import Button from "../../components/button";
+import CodeInput from "../../components/CodeInput";
 
-export default function LoginScreen({ navigation }) {
-    return (
+export default function PasswordRecoveryCodeScreen() {
+    const [code, setCode] = useState('');
+
+    const handleVerifyCode = () => {
+        if (code.length < 4) {
+            alert('digita aí os 4 número pf :(');
+            return;
+        }
+        alert('GAMESS!!!');
+    };
+
+
+    return(
         <View style={styles.container}>
             <View style={styles.top}>
-                <LogoTitle text={'ENTRAR'}/>
+                <LogoTitle text={'RECUPERAR SENHA'}/>
             </View>
-
+            
             <View style={styles.bottom}>
-                <Text style={styles.text1}>E-mail</Text>
-                <FormInput
-                    placeholder={'Digite seu e-mail'}
-                />
-
-                <Text style={styles.text1}>Senha</Text>
-                <FormInput
-                    placeholder={'Digite sua senha'}
-                    secureTextEntry={true}
-                />
-                
-                <View style={{marginTop: '9%'}}></View>
+                <Text style={styles.text1}>Código de recuperação de senha</Text>
+                <CodeInput code={code} setCode={setCode}/>
 
                 <Button
-                    text={'Entrar'}
+                    text={'Redefinir senha'}
                     color={Colors.greenLA1}
+                    onPress={handleVerifyCode}
                 />
-                
-                <TouchableOpacity onPress={() => navigation.navigate('PasswordRecoveryEmail')}>
-                    <Text style={styles.text1}>Esqueci a senha</Text>
-                </TouchableOpacity>
             </View>
 
             <View style={styles.footer}>
@@ -94,4 +92,4 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         marginTop: 16
     }
-});
+})
