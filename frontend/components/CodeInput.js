@@ -19,7 +19,7 @@ export default function CodeInput({ code, setCode }) {
             <TextInput
                 ref={inputRef}
                 value={code}
-                onChange={setCode}
+                onChangeText={setCode}
                 maxLength={maxLength}
                 keyboardType="number-pad"
                 textContentType="oneTimeCode"

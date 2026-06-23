@@ -6,6 +6,7 @@ import { Colors, Fonts } from "../../components/theme";
 import LogoTitle from "../../components/logoTitle";
 import Button from "../../components/button";
 import CodeInput from "../../components/CodeInput";
+import ScreenWrapper from "../../components/ScreenWrapper";
 
 export default function PasswordRecoveryCodeScreen() {
     const [code, setCode] = useState('');
@@ -18,34 +19,35 @@ export default function PasswordRecoveryCodeScreen() {
         alert('GAMESS!!!');
     };
 
-
     return(
-        <View style={styles.container}>
-            <View style={styles.top}>
-                <LogoTitle text={'RECUPERAR SENHA'}/>
-            </View>
-            
-            <View style={styles.bottom}>
-                <Text style={styles.text1}>Código de recuperação de senha</Text>
-                <CodeInput code={code} setCode={setCode}/>
+        <ScreenWrapper>
+            <View style={styles.innerContainer}>
+                <View style={styles.top}>
+                    <LogoTitle text={'RECUPERAR SENHA'}/>
+                </View>
+                
+                <View style={styles.bottom}>
+                    <Text style={styles.text1}>Código de recuperação de senha</Text>
+                    <CodeInput code={code} setCode={setCode}/>
 
-                <Button
-                    text={'Redefinir senha'}
-                    color={Colors.greenLA1}
-                    onPress={handleVerifyCode}
-                />
-            </View>
+                    <Button
+                        text={'Redefinir senha'}
+                        color={Colors.greenLA1}
+                        onPress={handleVerifyCode}
+                    />
+                </View>
 
-            <View style={styles.footer}>
-                <Text style={[styles.text2, {fontSize: 15}]}>Combatendo a poluição urbana com a união entre as pessoas</Text>
+                <View style={styles.footer}>
+                    <Text style={[styles.text2, {fontSize: 15}]}>Combatendo a poluição urbana com a união entre as pessoas</Text>
+                </View>
             </View>
-        </View>
+        </ScreenWrapper>
     );
 }
 
 const styles = StyleSheet.create({
     // View
-    container: {
+    innerContainer: {
         flex: 1,
         backgroundColor: Colors.background,
 

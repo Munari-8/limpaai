@@ -8,6 +8,7 @@ import { Colors, Fonts } from "../../components/theme";
 import LogoTitle from "../../components/logoTitle";
 import FormInput from "../../components/FormInput";
 import Button from "../../components/button";
+import ScreenWrapper from "../../components/ScreenWrapper";
 
 const recoverySchema = Yup.object().shape({
     email: Yup.string()
@@ -35,42 +36,44 @@ export default function PasswordRecoveryEmailScreen({ navigation }) {
     };
 
     return (
-        <View style={styles.container}>
-            <View style={styles.top}>
-                <LogoTitle text={'RECUPERAR SENHA'}/>
+        <ScreenWrapper>
+            <View style={styles.innerContainer}>
+                <View style={styles.top}>
+                    <LogoTitle text={'RECUPERAR SENHA'}/>
 
-                <Text style={styles.text2}>Será enviado um código de recuperação de senha para o seu e-mail, insira-o quando requisitado.</Text>
+                    <Text style={styles.text2}>Será enviado um código de recuperação de senha para o seu e-mail, insira-o quando requisitado.</Text>
+                </View>
+
+                <View style={styles.bottom}>
+                    <Text style={styles.text1}>E-mail</Text>
+                    <FormInput
+                        placeholder={'Digite seu e-mail'}
+                        value={email}
+                        setValue={setEmail}
+                        error={emailError}
+                        keyboardType='email-address'
+                        autoCapitalize='none'
+                    />
+                    
+                    <View style={{marginTop: '9%'}}></View>
+
+                    <Button
+                        text={'Entrar'}
+                        color={Colors.greenLA1}
+                        onPress={handleRecovery}
+                    />
+                </View>
+
+                <View style={styles.footer}>
+                    <Text style={[styles.text2, {fontSize: 15}]}>Combatendo a poluição urbana com a união entre as pessoas</Text>
+                </View>
             </View>
-
-            <View style={styles.bottom}>
-                <Text style={styles.text1}>E-mail</Text>
-                <FormInput
-                    placeholder={'Digite seu e-mail'}
-                    value={email}
-                    setValue={setEmail}
-                    error={emailError}
-                    keyboardType='email-address'
-                    autoCapitalize='none'
-                />
-                
-                <View style={{marginTop: '9%'}}></View>
-
-                <Button
-                    text={'Entrar'}
-                    color={Colors.greenLA1}
-                    onPress={handleRecovery}
-                />
-            </View>
-
-            <View style={styles.footer}>
-                <Text style={[styles.text2, {fontSize: 15}]}>Combatendo a poluição urbana com a união entre as pessoas</Text>
-            </View>
-        </View>
+        </ScreenWrapper>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    innerContainer: {
         flex: 1,
         backgroundColor: Colors.background,
 

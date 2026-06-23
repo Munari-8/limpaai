@@ -9,6 +9,7 @@ import Button from '../../components/button';
 import { Colors, Fonts } from '../../components/theme';
 import LogoTitle from '../../components/logoTitle';
 import FormInput from '../../components/FormInput';
+import ScreenWrapper from '../../components/ScreenWrapper';
 
 const signupSchema = Yup.object().shape({
     name: Yup.string()
@@ -87,108 +88,100 @@ export default function SignUpScreen({ navigation }) {
     };
 
     return (
-        <ScrollView
-            style={styles.scrollWrapper}
-            contentContainerStyle={styles.container}
-            showsVerticalScrollIndicator={false}
-        >
-            <View style={styles.top}>
-                <LogoTitle text='CRIAR CONTA'/>
-            </View>
+        <ScreenWrapper>
+            <View style={styles.innerContainer}>
+                <View style={styles.top}>
+                    <LogoTitle text='CRIAR CONTA'/>
+                </View>
 
-            <View style={styles.bottom}>
-                <Text style={styles.text1}>Nome</Text>
-                <FormInput
-                    placeholder={'Digite seu nome completo'}
-                    value={formData.name}
-                    setValue={(text) => handleInputChange('name', text)}
-                    error={formErrors.name}
-                />
-
-                <Text style={styles.text1}>E-mail</Text>
-                <FormInput
-                    placeholder={'Digite seu e-mail'}
-                    value={formData.email}
-                    setValue={(text) => handleInputChange('email', text)}
-                    error={formErrors.email}
-                />
-
-                <Text style={styles.text1}>Data de nascimento</Text>
-                <TouchableOpacity
-                    onPress={() => setShowPicker(true)}
-                    style={{ width: '100%', alignItems: 'center' }}
-                    activeOpacity={0.7}
-                >
-                    <View pointerEvents='none' style={{ width: '100%', alignItems: 'center' }}>
-                        <FormInput
-                            placeholder={'Selecione sua data de nascimento'}
-                            value={formattedData}
-                            setValue={() => {}}
-                            editable={false}
-                            error={formErrors.birthDate}
-                        />
-                    </View>
-                </TouchableOpacity>
-
-                {showPicker && (
-                    <DateTimePicker
-                        value={formData.birthDate || new Date()}
-                        mode='date'
-                        display='default'
-                        onChange={onChangeDate}
-                        maximumDate={new Date()}
+                <View style={styles.bottom}>
+                    <Text style={styles.text1}>Nome</Text>
+                    <FormInput
+                        placeholder={'Digite seu nome completo'}
+                        value={formData.name}
+                        setValue={(text) => handleInputChange('name', text)}
+                        error={formErrors.name}
                     />
-                )}
 
-                <Text style={styles.text1}>Senha</Text>
-                <FormInput
-                    placeholder={'Digite sua senha'}
-                    value={formData.password}
-                    setValue={(text) => handleInputChange('password', text)}
-                    secureTextEntry={true}
-                    error={formErrors.password}
-                />
+                    <Text style={styles.text1}>E-mail</Text>
+                    <FormInput
+                        placeholder={'Digite seu e-mail'}
+                        value={formData.email}
+                        setValue={(text) => handleInputChange('email', text)}
+                        error={formErrors.email}
+                    />
 
-                <Text style={styles.text1}>Confirmar senha</Text>
-                <FormInput
-                    placeholder={'Digite sua senha novamente'}
-                    value={formData.confirmPassword}
-                    setValue={(text) => handleInputChange('confirmPassword', text)}
-                    secureTextEntry={true}
-                    error={formErrors.confirmPassword}
-                />
+                    <Text style={styles.text1}>Data de nascimento</Text>
+                    <TouchableOpacity
+                        onPress={() => setShowPicker(true)}
+                        style={{ width: '100%', alignItems: 'center' }}
+                        activeOpacity={0.7}
+                    >
+                        <View pointerEvents='none' style={{ width: '100%', alignItems: 'center' }}>
+                            <FormInput
+                                placeholder={'Selecione sua data de nascimento'}
+                                value={formattedData}
+                                setValue={() => {}}
+                                editable={false}
+                                error={formErrors.birthDate}
+                            />
+                        </View>
+                    </TouchableOpacity>
 
-                <View style={{marginTop: '9%'}}></View>
-                
-                <Button
-                    text='Criar conta'
-                    color={Colors.greenLA1}
-                    onPress={handleSignUp}
-                />
+                    {showPicker && (
+                        <DateTimePicker
+                            value={formData.birthDate || new Date()}
+                            mode='date'
+                            display='default'
+                            onChange={onChangeDate}
+                            maximumDate={new Date()}
+                        />
+                    )}
+
+                    <Text style={styles.text1}>Senha</Text>
+                    <FormInput
+                        placeholder={'Digite sua senha'}
+                        value={formData.password}
+                        setValue={(text) => handleInputChange('password', text)}
+                        secureTextEntry={true}
+                        error={formErrors.password}
+                    />
+
+                    <Text style={styles.text1}>Confirmar senha</Text>
+                    <FormInput
+                        placeholder={'Digite sua senha novamente'}
+                        value={formData.confirmPassword}
+                        setValue={(text) => handleInputChange('confirmPassword', text)}
+                        secureTextEntry={true}
+                        error={formErrors.confirmPassword}
+                    />
+
+                    <View style={{marginTop: '9%'}}></View>
+                    
+                    <Button
+                        text='Criar conta'
+                        color={Colors.greenLA1}
+                        onPress={handleSignUp}
+                    />
+                </View>
+
+                <View style={styles.footer}>
+                    <Text style={[styles.text2, {fontSize: 15}]}>Combatendo a poluição urbana com a união entre as pessoas</Text>
+                </View>
             </View>
-
-            <View style={styles.footer}>
-                <Text style={[styles.text2, {fontSize: 15}]}>Combatendo a poluição urbana com a união entre as pessoas</Text>
-            </View>
-        </ScrollView>
+        </ScreenWrapper>
     );
 }
 
 const styles = StyleSheet.create({
     // View
-    scrollWrapper: {
+    innerContainer: {
         flex: 1,
-        backgroundColor: Colors.background
-    },
-    container: {
-        flexGrow: 1,
-        backgroundColor: Colors.background,
 
+        justifyContent: 'space-between',
         alignItems: 'center',
-        justifyContent: 'center',
 
-        paddingTop: '5%',
-        paddingBottom: '5%'
+        paddingVertical: '5%'
     },
     top: {
         width: '100%' ,

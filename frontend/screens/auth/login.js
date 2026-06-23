@@ -6,53 +6,55 @@ import Button from '../../components/button';
 import { Colors, Fonts } from '../../components/theme';
 import LogoTitle from '../../components/logoTitle';
 import FormInput from '../../components/FormInput';
+import ScreenWrapper from '../../components/ScreenWrapper';
 
 export default function LoginScreen({ navigation }) {
     return (
-        <View style={styles.container}>
-            <View style={styles.top}>
-                <LogoTitle text={'ENTRAR'}/>
+        <ScreenWrapper>
+            <View style={styles.innerContainer}>
+                <View style={styles.top}>
+                    <LogoTitle text={'ENTRAR'}/>
+                </View>
+
+                <View style={styles.bottom}>
+                    <Text style={styles.text1}>E-mail</Text>
+                    <FormInput
+                        placeholder={'Digite seu e-mail'}
+                    />
+
+                    <Text style={styles.text1}>Senha</Text>
+                    <FormInput
+                        placeholder={'Digite sua senha'}
+                        secureTextEntry={true}
+                    />
+                        
+                    <View style={{marginTop: '9%'}}></View>
+
+                    <Button
+                        text={'Entrar'}
+                        color={Colors.greenLA1}
+                    />
+                            
+                    <TouchableOpacity onPress={() => navigation.navigate('PasswordRecoveryEmail')}>
+                        <Text style={styles.text1}>Esqueci a senha</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.footer}>
+                    <Text style={[styles.text2, {fontSize: 15}]}>Combatendo a poluição urbana com a união entre as pessoas</Text>
+                </View>
             </View>
-
-            <View style={styles.bottom}>
-                <Text style={styles.text1}>E-mail</Text>
-                <FormInput
-                    placeholder={'Digite seu e-mail'}
-                />
-
-                <Text style={styles.text1}>Senha</Text>
-                <FormInput
-                    placeholder={'Digite sua senha'}
-                    secureTextEntry={true}
-                />
-                
-                <View style={{marginTop: '9%'}}></View>
-
-                <Button
-                    text={'Entrar'}
-                    color={Colors.greenLA1}
-                />
-                
-                <TouchableOpacity onPress={() => navigation.navigate('PasswordRecoveryEmail')}>
-                    <Text style={styles.text1}>Esqueci a senha</Text>
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.footer}>
-                <Text style={[styles.text2, {fontSize: 15}]}>Combatendo a poluição urbana com a união entre as pessoas</Text>
-            </View>
-        </View>
+        </ScreenWrapper>
     );
 }
 
 const styles = StyleSheet.create({
     // View
-    container: {
+    innerContainer: {
         flex: 1,
-        backgroundColor: Colors.background,
 
+        justifyContent: 'space-between',
         alignItems: 'center',
-        justifyContent: 'center',
 
         paddingVertical: '5%'
     },
@@ -67,7 +69,6 @@ const styles = StyleSheet.create({
         width: '100%',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 'auto',
         marginBottom: '5%'
     },
     footer: {
