@@ -1,6 +1,5 @@
-import React, { use } from "react";
+import React  from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
 
 // Expo
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -20,14 +19,23 @@ export default function Panel({ state, navigation }) {
         return currentRouteName === screenNames ? Colors.greenLA1 : Colors.white;
     }
 
+    // Varia a outline relativo a página atual
+    const getIconName = (screenName, baseName) => {
+        return currentRouteName === screenName ? baseName : `${baseName}-outline`;
+    }
+
     return (
         <LinearGradient
-            colors={['transparent', Colors.b75]}
+            colors={[Colors.b25, Colors.b50]}
+
+            start={{ x: 0, y: 1 }}
+            end={{ x: 1, y: 0 }}
+
             style={styles.container}
         >
             <TouchableOpacity onPress={() => navigation.navigate('Home')}>
                 <MaterialCommunityIcons
-                    name='home-outline'
+                    name={getIconName('Home', 'home')}
                     size={44}
                     color={getIconColor('Home')}
                 />
@@ -35,7 +43,7 @@ export default function Panel({ state, navigation }) {
 
             <TouchableOpacity onPress={() => navigation.navigate('Inbox')}>
                 <MaterialCommunityIcons
-                    name='message-text-outline'
+                    name={getIconName('Inbox', 'message-text')}
                     size={40}
                     color={getIconColor(['Inbox'])}
                 />
@@ -43,7 +51,7 @@ export default function Panel({ state, navigation }) {
 
             <TouchableOpacity onPress={() => navigation.navigate('MainCatalogo')}>
                 <MaterialCommunityIcons
-                    name='trash-can-outline'
+                    name={getIconName('MainCatalogo', 'trash-can')}
                     size={40}
                     color={getIconColor(['MainCatalogo'])}
                 />
@@ -51,7 +59,7 @@ export default function Panel({ state, navigation }) {
 
             <TouchableOpacity onPress={() => navigation.navigate('MainMural')}>
                 <MaterialCommunityIcons
-                    name='clipboard-text-outline'
+                    name={getIconName('MainMural', 'clipboard-text')}
                     size={40}
                     color={getIconColor(['MainMural'])}
                 />
@@ -62,17 +70,18 @@ export default function Panel({ state, navigation }) {
 
 const styles = StyleSheet.create({
     container: {
-        padding: '2%',
-        paddingVertical: '5%',
-
         position: 'absolute',
 
-        bottom: 0,
-        width: '111%',
+        paddingVertical: '3%',
+        bottom: '2%',
+        width: '92%',
+
+        borderRadius: 100,
 
         flexDirection: 'row',
         justifyContent: 'space-evenly',
         alignItems: 'center',
+        alignSelf: 'center',
         zIndex: 10
     }
 })

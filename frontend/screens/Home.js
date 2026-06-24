@@ -9,8 +9,6 @@ import { Image } from "expo-image";
 import { Colors, Fonts } from "../components/Theme";
 import ScreenWrapper from '../components/ScreenWrapper';
 import Button from '../components/Button'
-import Panel from "../components/Panel";
-import Header from "../components/Header";
 
 export default function HomeScreen({ navigation }) {
     const [isOpen, setIsOpen] = useState(true);
@@ -18,8 +16,6 @@ export default function HomeScreen({ navigation }) {
     return (
         <ScreenWrapper>
             <View style={styles.innerContainer}>
-                <Header txt={'Página Inicial'}/>
-
                 <View style={styles.main}>
                     <Image
                         placeholder={require('../assets/person.svg')}

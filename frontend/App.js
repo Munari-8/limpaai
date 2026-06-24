@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { act } from 'react';
 import { StyleSheet, Platform, View } from 'react-native';
 
 // React Navigation
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
@@ -11,6 +11,7 @@ import { useFonts, Roboto_300Light, Roboto_400Regular, Roboto_700Bold, RobotoCon
 
 // Local
 import Panel from './components/Panel';
+import Header from './components/Header';
 
 // Screens
 import WelcomeScreen from './screens/auth/Welcome';
@@ -33,11 +34,28 @@ import { Colors } from './components/Theme';
 const Stack = createNativeStackNavigator();
 const Tab = createMaterialTopTabNavigator();
 
+// Logado; App principal
 function MainAppTabs() {
+  const headerTitles = {
+    Home: 'Página Inicial',
+    Inbox: 'Mensagens',
+    MainCatalogo: 'Catálogo de Resíduos',
+    MainMural: 'Mural de Serviços'
+  };
+
   return (
     <View style={styles.container}>
       <Tab.Navigator
-        tabBar={(props) => <Panel {...props} />}
+        tabBar={(props) => {
+          const activeRouteName = props.state.routes[props.state.index].name;
+
+          return (
+            <>
+              <Header txt={headerTitles[activeRouteName]}/>
+              <Panel {...props}/>
+            </>
+          );
+        }}
         screenOptions={{
           swipeEnabled: true
         }}
@@ -67,12 +85,11 @@ export default function App() {
     return null;
   }
 
+  // Deslogado; Auth screens
   return (
     <NavigationContainer>
       <Stack.Navigator
-        tabBar={(props) => <Panel {...props} />}
         screenOptions={{
-          swipeEnabled: true,
           headerShadowVisible: false,
           headerTitle: '',
           headerStyle: {
@@ -88,7 +105,11 @@ export default function App() {
         <Stack.Screen name='PasswordRecoveryCode' component={PasswordRecoveryCodeScreen}/>
         <Stack.Screen name='PasswordRecoveryChange' component={PasswordRecoveryChangeScreen}/>
 
-        <Stack.Screen name='MainApp' component={MainAppTabs}/>
+        <Stack.Screen
+          name='MainApp'
+          component={MainAppTabs}
+          options={{headerShown: false }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
     );

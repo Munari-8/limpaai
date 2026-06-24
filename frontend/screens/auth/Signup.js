@@ -73,7 +73,7 @@ export default function SignUpScreen({ navigation }) {
             await signupSchema.validate(formData, { abortEarly: false });
             navigation.reset({
                 index: 0,
-                routes: [{ name: 'Home' }]
+                routes: [{ name: 'MainApp' }]
             });
         } catch (error) {
             if (error instanceof Yup.ValidationError) {

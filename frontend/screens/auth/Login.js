@@ -35,6 +35,10 @@ export default function LoginScreen({ navigation }) {
                     <Button
                         text={'Entrar'}
                         color={Colors.greenLA1}
+                        onPress={() => navigation.reset({
+                            index: 0,
+                            routes: [{ name: 'MainApp' }]
+                        })}
                     />
                             
                     <TouchableOpacity onPress={() => navigation.navigate('PasswordRecoveryEmail')}>

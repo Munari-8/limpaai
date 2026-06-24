@@ -5,16 +5,16 @@ import { StyleSheet, View, Text } from "react-native";
 import { Colors, Fonts } from "../../components/Theme";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import Header from "../../components/Header";
-import Panel from "../../components/Panel";
+import MessageBox from "../../components/MessageBox";
 
 export default function InboxScreen() {
     return (
         <ScreenWrapper>
             <View style={styles.innerContainer}>
                 <Header txt={'Caixa de Entrada'}/>
-
+                    
                 <View style={styles.main}>
-
+                    <MessageBox/>
                 </View>
             </View>
         </ScreenWrapper>
