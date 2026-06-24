@@ -1,7 +1,7 @@
 import { StyleSheet, TouchableOpacity, Text } from 'react-native'
 
 // Componentes locais
-import { Fonts } from './theme'
+import { Fonts } from './Theme'
 
 export default function Button({ text, color = '#000000', onPress }) {
     return (

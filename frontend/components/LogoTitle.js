@@ -4,7 +4,7 @@ import { StyleSheet, View, Text } from 'react-native';
 import { Image } from 'expo-image';
 
 // Componentes locais
-import { Colors, Fonts } from '../components/theme';
+import { Colors, Fonts } from './Theme';
 
 export default function LogoTitle({ text }) {
     return (

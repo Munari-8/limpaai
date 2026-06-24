@@ -2,9 +2,9 @@ import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 
 // Componentes locais
-import Button from '../../components/button';
-import { Colors, Fonts } from '../../components/theme';
-import LogoTitle from '../../components/logoTitle';
+import Button from '../../components/Button';
+import { Colors, Fonts } from '../../components/Theme';
+import LogoTitle from '../../components/LogoTitle';
 import FormInput from '../../components/FormInput';
 import ScreenWrapper from '../../components/ScreenWrapper';
 
@@ -20,6 +20,8 @@ export default function LoginScreen({ navigation }) {
                     <Text style={styles.text1}>E-mail</Text>
                     <FormInput
                         placeholder={'Digite seu e-mail'}
+                        keyboardType='email-address'
+                        autoCapitalize='none'
                     />
 
                     <Text style={styles.text1}>Senha</Text>
@@ -61,9 +63,7 @@ const styles = StyleSheet.create({
     top: {
         width: '100%' ,
         alignItems: 'center',
-
-        paddingTop: '20%',
-        marginTop: '5%'
+        paddingTop: '15%',
     },
     bottom: {
         width: '100%',

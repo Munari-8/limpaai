@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import { StyleSheet, View, Text, TextInput, Pressable } from "react-native";
 
 // Componentes locais
-import { Colors, Fonts } from "./theme";
+import { Colors, Fonts } from "./Theme";
 
 export default function CodeInput({ code, setCode }) {
     const inputRef = useRef(null);
@@ -56,7 +56,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
 
-        marginVertical: 20
+        marginTop: 8,
+        marginBottom: 16
     },
     boxesContainer: {
         width: '100%',

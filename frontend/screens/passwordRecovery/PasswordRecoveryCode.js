@@ -2,21 +2,24 @@ import React, { useState } from "react";
 import { StyleSheet, View, Text } from "react-native";
 
 // Componentes locais
-import { Colors, Fonts } from "../../components/theme";
-import LogoTitle from "../../components/logoTitle";
-import Button from "../../components/button";
+import { Colors, Fonts } from "../../components/Theme";
+import LogoTitle from "../../components/LogoTitle";
+import Button from "../../components/Button";
 import CodeInput from "../../components/CodeInput";
 import ScreenWrapper from "../../components/ScreenWrapper";
 
-export default function PasswordRecoveryCodeScreen() {
+export default function PasswordRecoveryCodeScreen({ navigation }) {
     const [code, setCode] = useState('');
+    const [error, setError] = useState('');
 
     const handleVerifyCode = () => {
         if (code.length < 4) {
-            alert('digita aí os 4 número pf :(');
+            setError('Digite o código');
             return;
         }
-        alert('GAMESS!!!');
+
+        setError('');
+        navigation.navigate('PasswordRecoveryChange')
     };
 
     return(
@@ -28,7 +31,16 @@ export default function PasswordRecoveryCodeScreen() {
                 
                 <View style={styles.bottom}>
                     <Text style={styles.text1}>Código de recuperação de senha</Text>
-                    <CodeInput code={code} setCode={setCode}/>
+                    <CodeInput
+                        code={code}
+                        setCode={(value) => {
+                            setCode(value);
+                            setError('');
+                        }}
+                    />
+                    {error && <Text style={styles.errorText}>{error}</Text>}
+
+                    <View style={{marginTop: '4%'}}></View>
 
                     <Button
                         text={'Redefinir senha'}
@@ -60,8 +72,7 @@ const styles = StyleSheet.create({
         width: '100%' ,
         alignItems: 'center',
 
-        paddingTop: '20%',
-        marginTop: '5%'
+        paddingTop: '15%'
     },
     bottom: {
         width: '100%',
@@ -93,5 +104,10 @@ const styles = StyleSheet.create({
 
         marginBottom: 8,
         marginTop: 16
+    },
+    errorText: {
+        color: 'red',
+        fontFamily: Fonts.light,
+        marginTop: '-3%'
     }
 })

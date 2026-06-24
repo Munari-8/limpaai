@@ -5,9 +5,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Yup from 'yup';
 
 // Componentes locais
-import Button from '../../components/button';
-import { Colors, Fonts } from '../../components/theme';
-import LogoTitle from '../../components/logoTitle';
+import Button from '../../components/Button';
+import { Colors, Fonts } from '../../components/Theme';
+import LogoTitle from '../../components/LogoTitle';
 import FormInput from '../../components/FormInput';
 import ScreenWrapper from '../../components/ScreenWrapper';
 
@@ -109,6 +109,8 @@ export default function SignUpScreen({ navigation }) {
                         value={formData.email}
                         setValue={(text) => handleInputChange('email', text)}
                         error={formErrors.email}
+                        keyboardType='email-address'
+                        autoCapitalize='none'
                     />
 
                     <Text style={styles.text1}>Data de nascimento</Text>
@@ -187,8 +189,7 @@ const styles = StyleSheet.create({
         width: '100%' ,
         alignItems: 'center',
 
-        paddingTop: '20%',
-        marginTop: '5%'
+        paddingTop: '15%',
     },
     bottom: {
         width: '100%',

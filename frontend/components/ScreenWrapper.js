@@ -9,7 +9,7 @@ import {
 } from "react-native";
 
 // Componentes locais
-import { Colors } from "./theme";
+import { Colors } from "./Theme";
 
 export default function ScreenWrapper({ children }) {
     return (

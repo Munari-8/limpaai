@@ -4,8 +4,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 
 // Componentes locais
-import Button from '../../components/button';
-import { Colors, Fonts } from '../../components/theme';
+import Button from '../../components/Button';
+import { Colors, Fonts } from '../../components/Theme';
 
 export default function WelcomeScreen({ navigation }){
     return (
@@ -57,8 +57,7 @@ const styles = StyleSheet.create({
         width: '100%' ,
         alignItems: 'center',
 
-        paddingTop: '25%',
-        marginTop: '10%'
+        paddingTop: '20%',
     },
     bottom: {
         width: '100%',

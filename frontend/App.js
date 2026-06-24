@@ -1,25 +1,58 @@
 import React from 'react';
-import { Platform } from 'react-native';
+import { StyleSheet, Platform, View } from 'react-native';
 
 // React Navigation
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
 // Fontes
 import { useFonts, Roboto_300Light, Roboto_400Regular, Roboto_700Bold, RobotoCondensed_900Black } from '@expo-google-fonts/roboto';
 
+// Local
+import Panel from './components/Panel';
+
 // Screens
-import WelcomeScreen from './screens/auth/welcome';
-import SignUpScreen from './screens/auth/signup';
-import LoginScreen from './screens/auth/login';
+import WelcomeScreen from './screens/auth/Welcome';
+import SignUpScreen from './screens/auth/Signup';
+import LoginScreen from './screens/auth/Login';
 
-import PasswordRecoveryEmailScreen from './screens/passwordRecovery/passwordRecoveryEmail';
-import PasswordRecoveryCodeScreen from './screens/passwordRecovery/passwordRecoveryCode';
+import PasswordRecoveryEmailScreen from './screens/passwordRecovery/PasswordRecoveryEmail';
+import PasswordRecoveryCodeScreen from './screens/passwordRecovery/PasswordRecoveryCode';
+import PasswordRecoveryChangeScreen from './screens/passwordRecovery/PasswordRecoveryChange';
 
-import HomeScreen from './screens/home';
+import HomeScreen from './screens/Home';
 
+import InboxScreen from './screens/Messages/Inbox';
+
+import MainMuralScreen from './screens/MuralDeServicos/MainMural';
+
+import MainCatalogoScreen from './screens/CatalogoDeResiduos/MainCatalogo';
+import { Colors } from './components/Theme';
 
 const Stack = createNativeStackNavigator();
+const Tab = createMaterialTopTabNavigator();
+
+function MainAppTabs() {
+  return (
+    <View style={styles.container}>
+      <Tab.Navigator
+        tabBar={(props) => <Panel {...props} />}
+        screenOptions={{
+          swipeEnabled: true
+        }}
+      >
+        <Tab.Screen name='Home' component={HomeScreen}/>
+
+        <Tab.Screen name='Inbox' component={InboxScreen}/>
+
+        <Tab.Screen name='MainCatalogo' component={MainCatalogoScreen}/>
+
+        <Tab.Screen name='MainMural' component={MainMuralScreen}/>
+      </Tab.Navigator>
+    </View>
+  );
+}
 
 export default function App() {
   let [fontsLoaded] = useFonts({
@@ -37,23 +70,32 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName='Welcome'
-        screenOptions={{ headerShown: false }}
+        tabBar={(props) => <Panel {...props} />}
+        screenOptions={{
+          swipeEnabled: true,
+          headerShadowVisible: false,
+          headerTitle: '',
+          headerStyle: {
+            backgroundColor: Colors.background
+          }
+        }}
       >
         <Stack.Screen name='Welcome' component={WelcomeScreen}/>
-
         <Stack.Screen name='SignUp' component={SignUpScreen}/>
-
         <Stack.Screen name='Login' component={LoginScreen}/>
 
-
         <Stack.Screen name='PasswordRecoveryEmail' component={PasswordRecoveryEmailScreen}/>
-
         <Stack.Screen name='PasswordRecoveryCode' component={PasswordRecoveryCodeScreen}/>
+        <Stack.Screen name='PasswordRecoveryChange' component={PasswordRecoveryChangeScreen}/>
 
-
-        <Stack.Screen name='Home' component={HomeScreen}/>
+        <Stack.Screen name='MainApp' component={MainAppTabs}/>
       </Stack.Navigator>
     </NavigationContainer>
-  );
+    );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1
+  }
+})

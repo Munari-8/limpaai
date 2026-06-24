@@ -4,10 +4,10 @@ import { StyleSheet, View, Text } from "react-native";
 import * as Yup from 'yup';
 
 // Componentes locais
-import { Colors, Fonts } from "../../components/theme";
-import LogoTitle from "../../components/logoTitle";
+import { Colors, Fonts } from "../../components/Theme";
+import LogoTitle from "../../components/LogoTitle";
 import FormInput from "../../components/FormInput";
-import Button from "../../components/button";
+import Button from "../../components/Button";
 import ScreenWrapper from "../../components/ScreenWrapper";
 
 const recoverySchema = Yup.object().shape({
@@ -58,7 +58,7 @@ export default function PasswordRecoveryEmailScreen({ navigation }) {
                     <View style={{marginTop: '9%'}}></View>
 
                     <Button
-                        text={'Entrar'}
+                        text={'Enviar código'}
                         color={Colors.greenLA1}
                         onPress={handleRecovery}
                     />
@@ -86,8 +86,7 @@ const styles = StyleSheet.create({
         width: '100%' ,
         alignItems: 'center',
 
-        paddingTop: '20%',
-        marginTop: '5%'
+        paddingTop: '15%',
     },
     bottom: {
         width: '100%',

@@ -2,7 +2,7 @@ import React from "react"
 import { StyleSheet, TextInput, Text, View } from "react-native"
 
 // Componentes locais
-import { Colors, Fonts } from "./theme"
+import { Colors, Fonts } from "./Theme"
 
 export default function FormInput({ placeholder, value, setValue, secureTextEntry = false, editable = true, error, ...rest }) {
     const isPlaceholderActive = value === '';
