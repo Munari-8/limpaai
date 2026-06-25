@@ -25,6 +25,7 @@ import PasswordRecoveryChangeScreen from './screens/passwordRecovery/PasswordRec
 import HomeScreen from './screens/Home';
 
 import InboxScreen from './screens/Messages/Inbox';
+import ChatScreen from './screens/Messages/Chat';
 
 import MainMuralScreen from './screens/MuralDeServicos/MainMural';
 
@@ -109,6 +110,12 @@ export default function App() {
           name='MainApp'
           component={MainAppTabs}
           options={{headerShown: false }}
+        />
+
+        <Stack.Screen
+          name='Chat'
+          component={ChatScreen}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>

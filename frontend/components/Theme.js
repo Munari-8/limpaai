@@ -19,6 +19,8 @@ export const Colors = {
     b25: '#00000025',
     b50: '#00000050',
     b75: '#00000075',
+
+    w25: '#ffffff25'
 };
 
 export const Fonts = {

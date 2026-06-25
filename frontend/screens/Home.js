@@ -18,8 +18,8 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.innerContainer}>
                 <View style={styles.main}>
                     <Image
-                        placeholder={require('../assets/person.svg')}
-                        style={styles.icon}
+                        placeholder={require('../assets/person/personGreen.svg')}
+                        style={styles.avatar}
                         contentFit='fill'
                         placeholderContentFit="cover"
                     />
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: '3%',
         marginVertical: '2%'
     },
-    icon: {
+    avatar: {
         width: 180,
         height: 180,
         borderRadius: 100,

@@ -4,17 +4,32 @@ import { StyleSheet, View, Text } from "react-native";
 // Componentes locais
 import { Colors, Fonts } from "../../components/Theme";
 import ScreenWrapper from "../../components/ScreenWrapper";
-import Header from "../../components/Header";
 import MessageBox from "../../components/MessageBox";
 
 export default function InboxScreen() {
     return (
         <ScreenWrapper>
-            <View style={styles.innerContainer}>
-                <Header txt={'Caixa de Entrada'}/>
-                    
+            <View style={styles.innerContainer}>                    
                 <View style={styles.main}>
-                    <MessageBox/>
+                    <MessageBox
+                        wasViewed={true}
+                        userName={'João'}
+                        taskType={'animais'}
+
+                        lastMessage={'Opa, vai ter o negócio de cultivo amanhã, tu vai?'}
+                        submittedByUser={false}
+                        data={'08:32'}
+                    />
+
+                    <MessageBox
+                        wasViewed={false}
+                        userName={'Vitor'}
+                        taskType={'hortas'}
+
+                        lastMessage={'Posso te passar o link do documento?'}
+                        submittedByUser={true}
+                        data={'15/06/2026'}
+                    />
                 </View>
             </View>
         </ScreenWrapper>
@@ -37,5 +52,7 @@ const styles = StyleSheet.create({
         top: '10%',
         width: '100%',
         alignItems: 'center',
+
+        rowGap: '2%'
     },
 })

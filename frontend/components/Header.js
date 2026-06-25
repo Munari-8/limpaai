@@ -34,7 +34,6 @@ export default function Header({ txt }) {
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
-
         top: '4.5%',
         left: 0,
         right: 0,
