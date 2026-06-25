@@ -73,13 +73,14 @@ const styles = StyleSheet.create({
 
     },
     subCon1: {
+        width: '115%',
         flexDirection: 'row',
         alignItems: 'center',
     },
     timeDate: {
-        position: 'absolute',
-        right: '5%',
-        top: '40%'
+        alignSelf: 'flex-start',
+
+        paddingTop: '4%'
     },
     eventName: {
         backgroundColor: Colors.b25,
@@ -113,7 +114,7 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.regular,
         fontSize: 15,
 
-        flex: 1
+        flexShrink: 1
     },
     timeText: {
         fontFamily: Fonts.regular,

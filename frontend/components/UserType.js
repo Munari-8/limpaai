@@ -23,7 +23,12 @@ export default function UserType({ wasViewed, userName, taskType }) {
 
     return (
         <View style={styles.subCon1}>
-            <Text style={[styles.username, { color: varColor }]}>{userName} </Text>
+            <Text
+                style={[styles.username, { color: varColor }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+            >
+                {userName} </Text>
                             
             <TouchableOpacity onPress={() => setIsOpen(!isOpen)}>
                 <MaterialCommunityIcons name={selectedIcon} size={24} color={varColor}/>
@@ -50,16 +55,17 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 4,
 
-        marginLeft: '1%',
+        marginHorizontal: '1%',
 
         justifyContent: 'center',
         alignItems: 'center'
     },
 
-
+    // Text
     username: {
         fontFamily: Fonts.bold,
-        fontSize: 18
+        fontSize: 18,
+        flexShrink: 1
     },
     eventText: {
         fontFamily: Fonts.regular,
