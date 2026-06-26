@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, View, Text } from "react-native";
 
 // Expo
@@ -7,7 +7,7 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 // Local
 import { Colors, Fonts } from "./Theme";
 
-export default function TaskBox({ taskType, showTaskType=true, name, date, time, address, peopleCount }) {
+export default function TaskBox({ taskType, showTaskType=true, name, date, showDate=true, time, address, peopleCount }) {
     const bgColorMapping = {
         animais: Colors.animais,
         hortas: Colors.hortas,
@@ -41,33 +41,52 @@ export default function TaskBox({ taskType, showTaskType=true, name, date, time,
                 <View>
                     <Text style={styles.text1}>{name}</Text>
 
-                    <Text style={styles.text2}>
-                        <MaterialCommunityIcons
-                            name='calendar'
-                            size={24}
-                        /> {date}
-                    </Text>
+                    
+                        {showDate && (
+                            <View style={styles.centerProps}>
+                                <MaterialCommunityIcons
+                                    name='calendar'
+                                    size={24}
+                                />
 
-                    <Text style={styles.text2}>
+                                <Text style={styles.text2}>
+                                    {date}
+                                </Text>
+                            </View>
+                        )}
+
+                    <View style={styles.centerProps}>
                         <MaterialCommunityIcons
                             name='clock'
                             size={24}
-                        /> {time}
-                    </Text>
+                        />
 
-                    <Text style={styles.text2}>
+                        <Text style={styles.text2}>
+                            {time}
+                        </Text>
+                    </View>
+                    
+                    <View style={styles.centerProps}>
                         <MaterialIcons
                             name='location-on'
                             size={24}
-                        /> {address}
-                    </Text>
+                        />
 
-                    <Text style={styles.text2}>
+                        <Text style={styles.text2}>
+                            {address}
+                        </Text>
+                    </View>
+                    
+                    <View style={styles.centerProps}>
                         <MaterialIcons
                             name='group'
                             size={24}
-                        /> {peopleCount}
-                    </Text>
+                        />
+
+                        <Text style={styles.text2}>
+                            {peopleCount}
+                        </Text>
+                    </View>
                 </View>
             </View>
         </View>
@@ -90,5 +109,13 @@ const styles = StyleSheet.create({
     text2: {
         fontFamily: Fonts.medium,
         fontSize: 16
+    },
+
+    // Outro
+    centerProps: {
+        flexDirection: 'row',
+        alignItems: 'center',
+
+        gap: '3%'
     }
 })

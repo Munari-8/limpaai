@@ -42,7 +42,7 @@ export default function HomeScreen({ navigation }) {
                 </View>
                 
                 <View style={styles.tasks}>
-                    <View style={{backgroundColor: Colors.greenLA0, width: '100%', height: '1%', borderRadius: '50%'}}></View>
+                    <View style={{backgroundColor: Colors.greenLA0, width: '100%', height: 2, borderRadius: '50%'}}></View>
 
                     <ToggleList
                         text={'Próximos Serviços'}
@@ -50,6 +50,7 @@ export default function HomeScreen({ navigation }) {
                         <TaskBox
                             taskType={'animais'}
                             name={'RESGATE DE GATOS'}
+                            showDate={false}
                             time={'14:30'}
                             address={'Novo Hamburgo'}
                             peopleCount={'2/4'}
@@ -68,20 +69,19 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.background,
 
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
 
         paddingVertical: '5%',
         paddingHorizontal: '5%'
     },
     main: {
-        flex: 1,
-        top: '10%',
+        top: '12%',
         width: '100%',
         alignItems: 'center',
+        marginBottom: '32%'
     },
     tasks: {
-        flex: 1,
-        width: '100%',
+        width: '100%'
     },
 
     // Text

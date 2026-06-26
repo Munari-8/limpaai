@@ -12,7 +12,7 @@ export default function ToggleList({ children, text }) {
 
     return (
         <View>
-            <View style={{ flexDirection: 'row' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={styles.text3}>{text}</Text>
                     
                 <TouchableOpacity onPress={() => setIsOpen(!isOpen)}>
