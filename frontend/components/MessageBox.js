@@ -30,11 +30,17 @@ export default function MessageBox({ wasViewed=false, userName, taskType, userIc
                 />
 
                 <View style={styles.textContainer}>
-                    <UserType
-                        wasViewed={wasViewed}
-                        userName={userName}
-                        taskType={taskType}
-                    />
+                    <View style={styles.topRow}>
+                        <UserType
+                            wasViewed={wasViewed}
+                            userName={userName}
+                            taskType={taskType}
+                        />
+
+                        <View style={styles.timeDate}>
+                            <Text style={[styles.timeText, { color: varColor }]}>{data}</Text>
+                        </View>
+                    </View>
 
                     <View style={styles.subCon1}>
                         <MaterialCommunityIcons name={submitted} size={24} color={varColor}/>
@@ -47,10 +53,6 @@ export default function MessageBox({ wasViewed=false, userName, taskType, userIc
                             {lastMessage}
                         </Text>
                     </View>
-                </View>
-                
-                <View style={styles.timeDate}>
-                    <Text style={[styles.timeText, { color: varColor }]}>{data}</Text>
                 </View>
             </View>
         </TouchableOpacity>
@@ -72,15 +74,21 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
 
     },
+    topRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
     subCon1: {
-        width: '115%',
+        width: '100%',
         flexDirection: 'row',
         alignItems: 'center',
     },
     timeDate: {
-        alignSelf: 'flex-start',
+        alignSelf: 'center',
 
-        paddingTop: '4%'
+        marginLeft: '2%',
+
+        flexShrink: 0
     },
     eventName: {
         backgroundColor: Colors.b25,

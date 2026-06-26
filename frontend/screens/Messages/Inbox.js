@@ -13,7 +13,7 @@ export default function InboxScreen() {
                 <View style={styles.main}>
                     <MessageBox
                         wasViewed={true}
-                        userName={'João'}
+                        userName={'João Barros'}
                         taskType={'animais'}
 
                         lastMessage={'Opa, vai ter o negócio de cultivo amanhã, tu vai?'}
@@ -23,7 +23,7 @@ export default function InboxScreen() {
 
                     <MessageBox
                         wasViewed={false}
-                        userName={'Vitor'}
+                        userName={'Vitor Daudt'}
                         taskType={'hortas'}
 
                         lastMessage={'Posso te passar o link do documento?'}

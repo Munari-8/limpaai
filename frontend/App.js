@@ -7,7 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
 // Fontes
-import { useFonts, Roboto_300Light, Roboto_400Regular, Roboto_700Bold, RobotoCondensed_900Black } from '@expo-google-fonts/roboto';
+import { useFonts, Roboto_300Light, Roboto_400Regular, Roboto_500Medium, Roboto_700Bold, RobotoCondensed_900Black } from '@expo-google-fonts/roboto';
 
 // Local
 import Panel from './components/Panel';
@@ -27,9 +27,16 @@ import HomeScreen from './screens/Home';
 import InboxScreen from './screens/Messages/Inbox';
 import ChatScreen from './screens/Messages/Chat';
 
+import MainCatalogoScreen from './screens/CatalogoDeResiduos/MainCatalogo';
+import VidroScreen from './screens/CatalogoDeResiduos/Vidro';
+import MetalScreen from './screens/CatalogoDeResiduos/Metal';
+import PlasticoScreen from './screens/CatalogoDeResiduos/Plastico';
+import PapelScreen from './screens/CatalogoDeResiduos/Papel';
+import OrganicoScreen from './screens/CatalogoDeResiduos/Organico';
+import NaoReciclavel from './screens/CatalogoDeResiduos/NaoReciclavel';
+
 import MainMuralScreen from './screens/MuralDeServicos/MainMural';
 
-import MainCatalogoScreen from './screens/CatalogoDeResiduos/MainCatalogo';
 import { Colors } from './components/Theme';
 
 const Stack = createNativeStackNavigator();
@@ -77,6 +84,7 @@ export default function App() {
   let [fontsLoaded] = useFonts({
     'Roboto-Light': Roboto_300Light,
     'Roboto-Regular': Roboto_400Regular,
+    'Roboto-Medium': Roboto_500Medium,
     'Roboto-Bold': Roboto_700Bold,
     'Roboto-Condensed-Black': require('./assets/fonts/RobotoCondensed-Black.ttf')
   });
@@ -115,6 +123,43 @@ export default function App() {
         <Stack.Screen
           name='Chat'
           component={ChatScreen}
+          options={{ headerShown: false }}
+        />
+
+        {/* CatalogoDeResiduos */}
+        <Stack.Screen
+          name='Vidro'
+          component={VidroScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name='Metal'
+          component={MetalScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name='Plastico'
+          component={PlasticoScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name='Papel'
+          component={PapelScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name='Organico'
+          component={OrganicoScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name='NaoReciclavel'
+          component={NaoReciclavel}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

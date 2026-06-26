@@ -34,12 +34,13 @@ export default function Header({ txt }) {
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
-        top: '4.5%',
+        top: 0,
         left: 0,
         right: 0,
 
         paddingHorizontal: '5%',
         paddingVertical: '2%',
+        paddingTop: '12%',
 
         flexDirection: 'row',
         justifyContent: 'space-between',

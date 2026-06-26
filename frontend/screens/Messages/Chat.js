@@ -2,20 +2,35 @@ import React from "react";
 import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
 
 // Expo
+import { Image } from "expo-image";
 import { MaterialIcons } from '@expo/vector-icons'
 
 // Componentes locais
 import { Colors, Fonts } from "../../components/Theme";
 import ScreenWrapper from "../../components/ScreenWrapper";
+import UserType from "../../components/UserType";
 
-export default function ChatScreen() {
+export default function ChatScreen({ navigation }) {
     return (
         <ScreenWrapper>
             <View style={styles.innerContainer}> 
                 <View style={styles.header}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.goBack()}>
                         <MaterialIcons name='arrow-back-ios-new' size={32} color='white'/>
                     </TouchableOpacity>
+
+                    <Image
+                        placeholder={require('../../assets/person/personBlack.svg')}
+                        style={styles.avatar}
+                        contentFit="fill"
+                        placeholderContentFit="cover"
+                    />
+
+                    <UserType
+                        wasViewed={true}
+                        userName={'João'}
+                        taskType={'animais'}
+                    />
                 </View>             
 
                 <View style={styles.main}>
@@ -45,10 +60,11 @@ const styles = StyleSheet.create({
 
         paddingHorizontal: '5%',
         paddingVertical: '2%',
-        paddingTop: '12.5%',
+        paddingTop: '12%',
+
+        gap: '25%',
 
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
         zIndex: 10,
 
@@ -60,4 +76,19 @@ const styles = StyleSheet.create({
         width: '100%',
         alignItems: 'center',
     },
+
+    avatar: {
+        position: 'absolute',
+
+        width: 64,
+        height: 64,
+
+        borderRadius: 160,
+        boxShadow: '0 0 0 7px black',
+
+        marginLeft: '17%',
+        marginTop: '14%',
+
+        backgroundColor: Colors.white
+    }
 })

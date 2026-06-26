@@ -9,6 +9,8 @@ import { Image } from "expo-image";
 import { Colors, Fonts } from "../components/Theme";
 import ScreenWrapper from '../components/ScreenWrapper';
 import Button from '../components/Button'
+import ToggleList from "../components/ToggleList";
+import TaskBox from "../components/TaskBox";
 
 export default function HomeScreen({ navigation }) {
     const [isOpen, setIsOpen] = useState(true);
@@ -42,23 +44,17 @@ export default function HomeScreen({ navigation }) {
                 <View style={styles.tasks}>
                     <View style={{backgroundColor: Colors.greenLA0, width: '100%', height: '1%', borderRadius: '50%'}}></View>
 
-                    <View style={{alignItems: 'center', right: '27.5%', flexDirection: 'row', marginTop: '1%'}}>
-                        <Text style={styles.text3}>Proximas tarefas</Text>
-
-                        <TouchableOpacity onPress={() => setIsOpen(!isOpen)}>
-                            <MaterialIcons
-                                name={isOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
-                                size={32}
-                                color={Colors.black}
-                            />
-                        </TouchableOpacity>
-
-                        {isOpen && (
-                            <View style={styles.taskList}>
-                                
-                            </View>
-                        )}
-                    </View>
+                    <ToggleList
+                        text={'Próximos Serviços'}
+                    >
+                        <TaskBox
+                            taskType={'animais'}
+                            name={'RESGATE DE GATOS'}
+                            time={'14:30'}
+                            address={'Novo Hamburgo'}
+                            peopleCount={'2/4'}
+                        />
+                    </ToggleList>
                 </View>
             </View>
         </ScreenWrapper>
@@ -86,7 +82,6 @@ const styles = StyleSheet.create({
     tasks: {
         flex: 1,
         width: '100%',
-        alignItems: 'center'
     },
 
     // Text
@@ -107,10 +102,6 @@ const styles = StyleSheet.create({
     },
     text2: {
         color: Colors.greenLA2,
-        fontFamily: Fonts.bold,
-        fontSize: 16
-    },
-    text3: {
         fontFamily: Fonts.bold,
         fontSize: 16
     },
