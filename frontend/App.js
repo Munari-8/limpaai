@@ -41,6 +41,21 @@ import { Colors } from './components/Theme';
 
 const Stack = createNativeStackNavigator();
 const Tab = createMaterialTopTabNavigator();
+const CatalogStack = createNativeStackNavigator();
+
+function CatalogStackNavigator() {
+  return (
+    <CatalogStack.Navigator
+      screenOptions={{
+        headerShown: false
+      }}
+    >
+      <CatalogStack.Screen name='MainCatalogoScreen' component={MainCatalogoScreen}/>
+
+      <CatalogStack.Screen name='CatalogoDeResiduos' component={CatalogoDeResiduos}/>
+    </CatalogStack.Navigator>
+  );
+}
 
 // Logado; App principal
 function MainAppTabs() {
@@ -72,9 +87,47 @@ function MainAppTabs() {
 
         <Tab.Screen name='Inbox' component={InboxScreen}/>
 
-        <Tab.Screen name='MainCatalogo' component={MainCatalogoScreen}/>
+        <Tab.Screen
+          name='MainCatalogo'
+          component={CatalogStackNavigator}
+          options={({ route }) =>{
+            const routeName = getFocusedRouteNameFromRoute(route);
+
+            if (routeName === 'CatalogoDeResiduos') {
+              return { swipeEnabled: false };
+            }
+
+            return { swipeEnabled: true }
+          }}  
+        />
 
         <Tab.Screen name='MainMural' component={MainMuralScreen}/>
+      </Tab.Navigator>
+    </View>
+  );
+}
+
+function CatalogoDeResiduos() {
+  return (
+    <View style={styles.container}>
+      <Tab.Navigator
+        tabBar={() => null}
+
+        screenOptions={{
+          swipeEnabled: true
+        }}
+      >
+        <Tab.Screen name='Vidro' component={VidroScreen}/>
+
+        <Tab.Screen name='Metal' component={MetalScreen}/>
+        
+        <Tab.Screen name='Plastico' component={PlasticoScreen}/>
+        
+        <Tab.Screen name='Papel' component={PapelScreen}/>
+
+        <Tab.Screen name='Organico' component={OrganicoScreen}/>
+
+        <Tab.Screen name='NaoReciclavel' component={NaoReciclavel}/>
       </Tab.Navigator>
     </View>
   );
@@ -128,38 +181,8 @@ export default function App() {
 
         {/* CatalogoDeResiduos */}
         <Stack.Screen
-          name='Vidro'
-          component={VidroScreen}
-          options={{ headerShown: false }}
-        />
-
-        <Stack.Screen
-          name='Metal'
-          component={MetalScreen}
-          options={{ headerShown: false }}
-        />
-
-        <Stack.Screen
-          name='Plastico'
-          component={PlasticoScreen}
-          options={{ headerShown: false }}
-        />
-
-        <Stack.Screen
-          name='Papel'
-          component={PapelScreen}
-          options={{ headerShown: false }}
-        />
-
-        <Stack.Screen
-          name='Organico'
-          component={OrganicoScreen}
-          options={{ headerShown: false }}
-        />
-
-        <Stack.Screen
-          name='NaoReciclavel'
-          component={NaoReciclavel}
+          name='CatalogoDeResiduos'
+          component={CatalogoDeResiduos}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

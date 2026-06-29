@@ -26,7 +26,7 @@ export default function Panel({ state, navigation }) {
 
     return (
         <LinearGradient
-            colors={[Colors.b25, Colors.b50]}
+            colors={[Colors.b10, Colors.b25]}
 
             start={{ x: 0, y: 1 }}
             end={{ x: 1, y: 0 }}
@@ -49,7 +49,9 @@ export default function Panel({ state, navigation }) {
                 />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('MainCatalogo')}>
+            <TouchableOpacity onPress={() => navigation.navigate('MainCatalogo', {
+                screen: 'MainCatalogoScreen'
+            })}>
                 <MaterialCommunityIcons
                     name={getIconName('MainCatalogo', 'trash-can')}
                     size={40}
@@ -73,8 +75,9 @@ const styles = StyleSheet.create({
         position: 'absolute',
 
         paddingVertical: '3%',
-        bottom: '2%',
+        bottom: '1.89%',
         width: '92%',
+        height: 64,
 
         borderRadius: 100,
 

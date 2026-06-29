@@ -6,16 +6,16 @@ import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 // Local
-import { Colors, Fonts } from "./Theme";
+import { Colors, Fonts } from "../Theme";
 import { Image } from "expo-image";
-import UserType from "./UserType";
+import UserType from "../UserType";
 
 export default function MessageBox({ wasViewed=false, userName, taskType, userIcon, lastMessage, submittedByUser, data }) {
     const navigation = useNavigation();
 
-    const cardColor = wasViewed ? Colors.greenLA1 : Colors.b25;
+    const cardColor = wasViewed ? Colors.greenLA1 : Colors.b10;
     const varColor = wasViewed ? Colors.white : Colors.black;
-    const avatarSource = wasViewed ? require('../assets/person/personGreen.svg') : require('../assets/person/personBlack.svg');
+    const avatarSource = wasViewed ? require('../../assets/person/personGreen.svg') : require('../../assets/person/personBlack.svg');
     const submitted = submittedByUser ? 'arrow-top-right' : 'arrow-bottom-left'
 
     return (

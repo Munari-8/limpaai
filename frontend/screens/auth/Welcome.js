@@ -16,6 +16,7 @@ export default function WelcomeScreen({ navigation }){
                 <Image
                     source={require('../../assets/limpaai-logo.svg')}
                     style={styles.logo}
+                    contentFit='contain'
                 />
             </View>
 

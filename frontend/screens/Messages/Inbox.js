@@ -4,7 +4,7 @@ import { StyleSheet, View, Text } from "react-native";
 // Componentes locais
 import { Colors, Fonts } from "../../components/Theme";
 import ScreenWrapper from "../../components/ScreenWrapper";
-import MessageBox from "../../components/MessageBox";
+import MessageBox from "../../components/Mensagens/MessageBox";
 
 export default function InboxScreen() {
     return (

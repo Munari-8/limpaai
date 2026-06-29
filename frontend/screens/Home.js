@@ -10,10 +10,15 @@ import { Colors, Fonts } from "../components/Theme";
 import ScreenWrapper from '../components/ScreenWrapper';
 import Button from '../components/Button'
 import ToggleList from "../components/ToggleList";
-import TaskBox from "../components/TaskBox";
+import TaskBox from "../components/Serviços/TaskBox";
 
 export default function HomeScreen({ navigation }) {
+    const name = 'usuário' // Vai ser recebido como 'name' no futuro
+
+    
     const [isOpen, setIsOpen] = useState(true);
+        
+    const username = name.toUpperCase();
 
     return (
         <ScreenWrapper>
@@ -26,7 +31,7 @@ export default function HomeScreen({ navigation }) {
                         placeholderContentFit="cover"
                     />
                     <Text style={styles.text2}>BEM-VINDO(A),</Text>
-                    <Text style={styles.textUsername}>USUÁRIO</Text>
+                    <Text style={styles.textUsername}>{username}</Text>
 
                     <Text style={styles.text1}>
                         <Text style={styles.serviceCounterText}>0 </Text>
@@ -49,11 +54,15 @@ export default function HomeScreen({ navigation }) {
                     >
                         <TaskBox
                             taskType={'animais'}
-                            name={'RESGATE DE GATOS'}
-                            showDate={false}
-                            time={'14:30'}
+                            name={'resgate de gatos'}
+                            description={'Resgate de gatos perto do bairro X na rua Y. Se puder, leve coisa Z e item W.'}
+                            date={'08/07/2026'}
+                            showDate={false} // Automatizar pra checar em qual screen ele tá
+                            startTime={'14:30'}
+                            endTime={'16:30'}
                             address={'Novo Hamburgo'}
-                            peopleCount={'2/4'}
+                            registeredPeople={'2'}
+                            personLimit={'4'}
                         />
                     </ToggleList>
                 </View>

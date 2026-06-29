@@ -99,7 +99,7 @@ export default function UserType({ wasViewed, userName, taskType }) {
                 </TouchableOpacity>
             
                 {isOpen && (
-                    <View style={[styles.eventName, { backgroundColor: Colors.b75 }, getTooltipPositionStyle()]}>
+                    <View style={[styles.eventName, { backgroundColor: Colors.b50 }, getTooltipPositionStyle()]}>
                         <Text style={styles.eventText}>Nome do Evento</Text>
                     </View>
                 )}

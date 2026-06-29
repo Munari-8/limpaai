@@ -8,7 +8,7 @@ import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Fonts } from "../../components/Theme";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import ToggleList from "../../components/ToggleList";
-import TaskBox from "../../components/TaskBox";
+import TaskBox from "../../components/Serviços/TaskBox";
 
 export default function MainMuralScreen() {
     const [isOpen, setIsOpen] = useState(true);
@@ -26,10 +26,10 @@ export default function MainMuralScreen() {
                             taskType={'animais'}
                             showTaskType={showTaskType}
                             name={'SERVIÇO'}
-                            date={'30/06'}
-                            time={'00:00'}
+                            date={'30/06/2026'}
+                            startTime={'00:00'}
+                            endTime={'00:00'}
                             address={'São Leopoldo'}
-                            peopleCount={'0/10'}
                         />
                     </ToggleList>
 

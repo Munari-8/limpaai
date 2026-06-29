@@ -16,26 +16,45 @@ export const Colors = {
     formInputBg: '#00000010',
 
     black: 'black',
-    b10: '#00000010',
-    b25: '#00000025',
-    b50: '#00000050',
-    b75: '#00000075',
+    b10: '#00000020',
+    b25: '#00000040',
+    b50: '#0000007a',
+    b75: '#000000ab',
 
     white: 'white',
     w25: '#ffffff25',
 
     // Catálogo de Resíduos
     vidro: '#4CAF50',
+    vidro30: '#4caf4f50',
+
     metal: '#FFC107',
+    metal30: '#FFC10750',
+
     plastico: '#F44336',
+    plastico30: '#F4433650',
+
     papel: '#2196F3',
+    papel30: '#2196F350',
+
     organico: '#795548',
+    organico30: '#79554850',
+
     naoReciclavel: '#9E9E9E',
+    naoReciclavel30: '#9E9E9E50',
 
     // Tipo de Serviço
+    animaisLight: '#FFB74D',
     animais: '#FF9800',
+    animaisDark: '#F57C00',
+
+    hortasLight: '#81C784',
     hortas: '#4CAF50',
-    limpeza: '#673AB7'
+    hortasDark: '#388E3C',
+
+    limpezaLight: '#9575CD',
+    limpeza: '#673AB7',
+    limpezaDark: '#512DA8'
 };
 
 export const Fonts = {
