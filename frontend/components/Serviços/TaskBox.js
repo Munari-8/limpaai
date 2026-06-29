@@ -50,7 +50,7 @@ export default function TaskBox({ taskType, showTaskType=true, name, description
                 visible={isOpen}
                 onClose={() => setIsOpen(false)}
                 color={darkColor}
-                icon={selectedIcon}
+                taskIcon={selectedIcon}
                 name={taskName}
                 description={description}
                 date={date}

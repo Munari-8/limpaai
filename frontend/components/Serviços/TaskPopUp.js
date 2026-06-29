@@ -8,13 +8,15 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 // Local
 import { Colors, Fonts } from "../Theme";
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-export default function TaskPopUp({ visible, onClose, color, icon, name, description, date, startTime, endTime, address, image, personCount, username }){
+export default function TaskPopUp({ visible, onClose, color, taskIcon, name, description, date, startTime, endTime, address, image, personCount, username, avatar }){
+    const isSubscribed = false
+    
     const fullTime = `${startTime} - ${endTime}`
 
+    // Controle das imagens
     const [activeIndex, setActiveIndex] = useState(null);
-
     const [imageSize, setImageSize] = useState({})
 
     const images = [
@@ -37,7 +39,7 @@ export default function TaskPopUp({ visible, onClose, color, icon, name, descrip
                         <View style={styles.container}>
                             <View style={styles.tag}>
                                 <MaterialCommunityIcons
-                                    name={icon}
+                                    name={taskIcon}
                                     size={96}
                                 />
 
@@ -146,6 +148,31 @@ export default function TaskPopUp({ visible, onClose, color, icon, name, descrip
                                     
                                 <Text style={styles.subText}>{personCount}</Text>
                             </View>
+
+                            <View style={styles.info}>
+                                <View style={styles.tag}>
+                                    <Image
+                                        placeholder={require('../../assets/person/personAnimais.svg')}
+                                        style={styles.avatar}
+                                        contentFit="contain"
+                                        placeholderContentFit="contain"
+                                    />
+
+                                    <Text style={[styles.tagText, { color: color }]}>{username}</Text>
+                                </View>
+                            </View>
+
+                            {isSubscribed && (
+                                <View>
+                                    <Text>a</Text>
+                                </View>
+                            )}
+
+                            {!isSubscribed && (
+                                <View>
+                                    <Text>b</Text>
+                                </View>
+                            )}
                         </View>
                     </TouchableWithoutFeedback>
                 </View>
@@ -187,7 +214,7 @@ export default function TaskPopUp({ visible, onClose, color, icon, name, descrip
                                     onPress={() => setActiveIndex(null)}
                                 >
                                     <TouchableWithoutFeedback onPress={() => {}}>
-                                        <View style={styles.boxStyle}>
+                                        <View style={boxStyle}>
                                             <Image
                                                 source={item}
                                                 style={{ width: '100%', height: '100%' }}
@@ -198,8 +225,9 @@ export default function TaskPopUp({ visible, onClose, color, icon, name, descrip
                                                     if (!dims) {
                                                         const scale = Math.min(screenWidth / width, screenHeight / height);
                                                         setImageSize(prev => ({
-                                                            
-                                                        }))
+                                                            ...prev,
+                                                            [index]: { width: width * scale, height: height * scale }
+                                                        }));
                                                     }
                                                 }}
                                             />
@@ -242,7 +270,8 @@ const styles = StyleSheet.create({
         gap: '1%'
     },
     info: {
-        width: '100%'
+        width: '100%',
+        paddingVertical: '1%'
     },
     imageView: {
         flexDirection: 'row',
@@ -294,9 +323,15 @@ const styles = StyleSheet.create({
         fontSize: 16
     },
 
-    // Outro
+    // Imagem
     fullscreenImage: {
         width: '100%',
         height: '100%'
+    },
+    avatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 100,
+        backgroundColor: Colors.animaisLight
     }
 })

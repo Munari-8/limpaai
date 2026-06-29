@@ -25,9 +25,10 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.innerContainer}>
                 <View style={styles.main}>
                     <Image
+                        source={''}
                         placeholder={require('../assets/person/personGreen.svg')}
                         style={styles.avatar}
-                        contentFit='fill'
+                        contentFit='contain'
                         placeholderContentFit="cover"
                     />
                     <Text style={styles.text2}>BEM-VINDO(A),</Text>
@@ -63,6 +64,7 @@ export default function HomeScreen({ navigation }) {
                             address={'Novo Hamburgo'}
                             registeredPeople={'2'}
                             personLimit={'4'}
+                            username={'João Barros'}
                         />
                     </ToggleList>
                 </View>

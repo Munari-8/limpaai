@@ -44,17 +44,17 @@ export const Colors = {
     naoReciclavel30: '#9E9E9E50',
 
     // Tipo de Serviço
-    animaisLight: '#FFB74D',
+    animaisLight: '#FFE0B2',
     animais: '#FF9800',
-    animaisDark: '#F57C00',
+    animaisDark: '#EF6C00',
 
-    hortasLight: '#81C784',
+    hortasLight: '#C8E6C9',
     hortas: '#4CAF50',
-    hortasDark: '#388E3C',
+    hortasDark: '#2E7D32',
 
-    limpezaLight: '#9575CD',
+    limpezaLight: '#D1C4E9',
     limpeza: '#673AB7',
-    limpezaDark: '#512DA8'
+    limpezaDark: '#4527A0'
 };
 
 export const Fonts = {
