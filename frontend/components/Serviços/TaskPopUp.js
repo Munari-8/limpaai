@@ -15,6 +15,8 @@ export default function TaskPopUp({ visible, onClose, color, icon, name, descrip
 
     const [activeIndex, setActiveIndex] = useState(null);
 
+    const [imageSize, setImageSize] = useState({})
+
     const images = [
         'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMLLIm-K9jJ8xaJ0GZXNfbfs5CwtanGKzXbDzQGoK1hzK7dUPU9TnOHvE&s=10',
         'https://cloudfront-us-east-1.images.arcpublishing.com/estadao/THWRKLGVOVEZVC5D4Q3UD2K3VM.jpg',
@@ -22,6 +24,7 @@ export default function TaskPopUp({ visible, onClose, color, icon, name, descrip
     ];
 
     return (
+        <>
         <Modal
             visible={visible}
             transparent={true}
@@ -140,53 +143,76 @@ export default function TaskPopUp({ visible, onClose, color, icon, name, descrip
 
                                     <Text style={[styles.tagText, { color: color }]}>Participantes:</Text>
                                 </View>
-
+                                    
                                 <Text style={styles.subText}>{personCount}</Text>
                             </View>
                         </View>
                     </TouchableWithoutFeedback>
                 </View>
             </TouchableWithoutFeedback>
-
-             {/* Carrosel de imagens em tela cheia */}
-            <Modal
-                visible={activeIndex !== null}
-                transparent={true}
-                animationType='fade'
-                onRequestClose={() => setActiveIndex(null)}
-            >
-                <View style={styles.fullscreenContainer}>
-                    <FlatList
-                        data={images}
-                        horizontal
-                        pagingEnabled
-                        showsHorizontalScrollIndicator={false}
-                        initialScrollIndex={activeIndex}
-                        getItemLayout={(data, index) => ({
-                            length: screenWidth,
-                            offset: screenWidth * index,
-                            index
-                        })}
-                        keyExtractor={(item, index) => index.toString()}
-                        renderItem={({ item }) => (
-                            <View style={styles.fullscreenBg}>
-                                 <TouchableWithoutFeedback onPress={() => setActiveIndex(null)}>
-                                    <View style={StyleSheet.absoluteFillObject} />
-                                </TouchableWithoutFeedback>
-                                    
-                                <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-                                    <Image
-                                        source={item}
-                                        style={styles.fullscreenImage}
-                                        contentFit="contain"
-                                    />
-                                </TouchableWithoutFeedback>
-                            </View>
-                        )}
-                    />
-                </View>
-            </Modal>
         </Modal>
+
+        <Modal
+            visible={activeIndex !== null}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setActiveIndex(null)}
+        >
+            <View style={styles.fullscreenContainer}>
+                <FlatList
+                    style={{ flex: 1 }}
+                    data={images}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    initialScrollIndex={activeIndex}
+                    getItemLayout={(data, index) => ({
+                        length: screenWidth,
+                        offset: screenWidth * index,
+                        index
+                    })}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({ item, index }) => {
+                        const dims = imageSize[index];
+
+                        const boxStyle = dims
+                            ? { width: dims.width, height: dims.height }
+                            : { width: screenWidth, height: screenHeight };
+
+                        return(
+                            <View style={styles.fullscreenBg}>
+                                <TouchableOpacity
+                                    style={styles.fullscreenClickableArea}
+                                    activeOpacity={1}
+                                    onPress={() => setActiveIndex(null)}
+                                >
+                                    <TouchableWithoutFeedback onPress={() => {}}>
+                                        <View style={styles.boxStyle}>
+                                            <Image
+                                                source={item}
+                                                style={{ width: '100%', height: '100%' }}
+                                                contentFit="contain"
+                                                onLoad={(event) => {
+                                                    const { width, height } = event.source;
+
+                                                    if (!dims) {
+                                                        const scale = Math.min(screenWidth / width, screenHeight / height);
+                                                        setImageSize(prev => ({
+                                                            
+                                                        }))
+                                                    }
+                                                }}
+                                            />
+                                        </View>
+                                    </TouchableWithoutFeedback>
+                                </TouchableOpacity>
+                            </View>
+                        );
+                    }}
+                />
+            </View>
+        </Modal>
+        </>
     );
 }
 
@@ -227,11 +253,7 @@ const styles = StyleSheet.create({
     },
     fullscreenBg: {
         width: screenWidth,
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-
-        position: 'relative'
+        flex: 1
     },
     fullscreenContainer: {
         flex: 1,
@@ -249,6 +271,13 @@ const styles = StyleSheet.create({
 
         width: '100%',
         backgroundColor: 'transparent'
+    },
+    fullscreenClickableArea: {
+        flex: 1,
+        width: '100%',
+
+        justifyContent: 'center',
+        alignItems: 'center'
     },
 
     // Text
