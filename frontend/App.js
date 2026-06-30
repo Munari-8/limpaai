@@ -7,7 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
 // Fontes
-import { useFonts, Roboto_300Light, Roboto_400Regular, Roboto_500Medium, Roboto_700Bold, RobotoCondensed_900Black } from '@expo-google-fonts/roboto';
+import { useFonts, Roboto_300Light, Roboto_400Regular, Roboto_500Medium, Roboto_700Bold} from '@expo-google-fonts/roboto';
 
 // Local
 import Panel from './components/Panel';
@@ -139,7 +139,8 @@ export default function App() {
     'Roboto-Regular': Roboto_400Regular,
     'Roboto-Medium': Roboto_500Medium,
     'Roboto-Bold': Roboto_700Bold,
-    'Roboto-Condensed-Black': require('./assets/fonts/RobotoCondensed-Black.ttf')
+    'Roboto-Condensed-Black': require('./assets/fonts/RobotoCondensed-Black.ttf'),
+    'Roboto-Condensed-SemiBold': require('./assets/fonts/RobotoCondensed-SemiBold.ttf')
   });
   
   // Se a fonte não carregar, não quebra o texto

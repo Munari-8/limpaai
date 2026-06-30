@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, TouchableOpacity, Modal, TouchableWithoutFeedback, FlatList, Dimensions } from "react-native";
+import {
+    StyleSheet, View, Text, TouchableOpacity, Modal,
+    TouchableWithoutFeedback, FlatList, Dimensions, ScrollView
+} from "react-native";
 
 // Expo
 import { Image } from "expo-image";
@@ -7,11 +10,19 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 
 // Local
 import { Colors, Fonts } from "../Theme";
+import Button from "../Button";
+import TaskCancelPopUp from "./TaskCancelPopUp";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function TaskPopUp({ visible, onClose, color, taskIcon, name, description, date, startTime, endTime, address, image, personCount, username, avatar }){
-    const isSubscribed = false
+    const [isSubscribed, setIsSubscribed] = useState(true);
+
+    const handleCancel = () => {
+        setIsSubscribed(false);
+        setIsOpen(false);
+        onClose();
+    }
     
     const fullTime = `${startTime} - ${endTime}`
 
@@ -25,6 +36,9 @@ export default function TaskPopUp({ visible, onClose, color, taskIcon, name, des
         'https://futebolatino.com.br/wp-content/uploads/2023/11/Suarez-Gremio.jpg'
     ];
 
+    // Controle do TaskCancelPopUp
+    const [isOpen, setIsOpen] = useState(false);
+
     return (
         <>
         <Modal
@@ -33,150 +47,190 @@ export default function TaskPopUp({ visible, onClose, color, taskIcon, name, des
             animationType="fade"
             onRequestClose={onClose}
         >
-            <TouchableWithoutFeedback onPress={onClose}>
+            <TaskCancelPopUp
+                visible={isOpen}
+                onClose={() => setIsOpen(false)}
+                name={name}
+                onConfirm={handleCancel}
+            />
                 <View style={styles.bgShadow}>
-                    <TouchableWithoutFeedback>
+                    <TouchableOpacity
+                        style={styles.backdropTouch}
+                        activeOpacity={1}
+                        onPress={onClose}
+                    />
+
                         <View style={styles.container}>
-                            <View style={styles.tag}>
-                                <MaterialCommunityIcons
-                                    name={taskIcon}
-                                    size={96}
-                                />
-
-                                <Text style={styles.taskName}>{name}</Text>
-                            </View>
-
-                            <Text style={styles.subText}>
-                                {description}
-                            </Text>
-
-                            <View style={styles.info}>
+                            <ScrollView
+                                style={styles.scrollContainer}
+                                contentContainerStyle={styles.scrollContent}
+                                showsVerticalScrollIndicator={false}
+                            >
                                 <View style={styles.tag}>
                                     <MaterialCommunityIcons
-                                        name='calendar'
-                                        size={24}
-                                        color={color}
+                                        name={taskIcon}
+                                        size={96}
                                     />
 
-                                    <Text style={[styles.tagText, { color: color }]}>Data:</Text>
+                                    <Text style={styles.taskName}>{name}</Text>
                                 </View>
 
-                                <Text style={styles.subText}>{date}</Text>
-                            </View>
+                                <Text style={styles.subText}>
+                                    {description}
+                                </Text>
 
-                            <View style={styles.info}>
-                                <View style={styles.tag}>
-                                    <MaterialCommunityIcons
-                                        name='clock'
-                                        size={24}
-                                        color={color}
-                                    />
+                                <View style={[styles.info, { marginTop: '4%' }]}>
+                                    <View style={styles.tag}>
+                                        <MaterialCommunityIcons
+                                            name='calendar'
+                                            size={24}
+                                            color={color}
+                                        />
 
-                                    <Text style={[styles.tagText, { color: color }]}>Horário:</Text>
+                                        <Text style={[styles.tagText, { color: color }]}>Data:</Text>
+                                    </View>
+
+                                    <Text style={styles.subText}>{date}</Text>
                                 </View>
 
-                                <Text style={styles.subText}>{fullTime}</Text>
-                            </View>
+                                <View style={styles.info}>
+                                    <View style={styles.tag}>
+                                        <MaterialCommunityIcons
+                                            name='clock'
+                                            size={24}
+                                            color={color}
+                                        />
 
-                            <View style={styles.info}>
-                                <View style={styles.tag}>
-                                    <MaterialIcons
-                                        name='location-pin'
-                                        size={24}
-                                        color={color}
-                                    />
+                                        <Text style={[styles.tagText, { color: color }]}>Horário:</Text>
+                                    </View>
 
-                                    <Text style={[styles.tagText, { color: color }]}>Localização:</Text>
+                                    <Text style={styles.subText}>{fullTime}</Text>
                                 </View>
 
-                                <Text style={styles.subText}>{address}</Text>
-                            </View>
+                                <View style={styles.info}>
+                                    <View style={styles.tag}>
+                                        <MaterialIcons
+                                            name='location-pin'
+                                            size={24}
+                                            color={color}
+                                        />
 
-                            <View style={styles.imageView}>
-                                <TouchableOpacity
-                                    style={{ width: '66.66%', aspectRatio: 1 }}
-                                    onPress={() => setActiveIndex(0)}
-                                >
-                                    <Image
-                                        source={images[0]}
-                                        placeholder={require('../../assets/brokenImage200.svg')}
-                                        style={{ width: '100%', height: '100%' }}
-                                        contentFit='cover'
-                                        placeholderContentFit="cover"
-                                    />
-                                </TouchableOpacity>
+                                        <Text style={[styles.tagText, { color: color }]}>Localização:</Text>
+                                    </View>
 
-                                <View style={{ width: '33.33%' }}>
+                                    <Text style={styles.subText}>{address}</Text>
+                                </View>
+
+                                <View style={styles.imageView}>
                                     <TouchableOpacity
-                                        style={{ width: '100%', aspectRatio: 1 }}
-                                        onPress={() => setActiveIndex(1)}
+                                        style={{ width: '66.66%', aspectRatio: 1 }}
+                                        onPress={() => setActiveIndex(0)}
                                     >
                                         <Image
-                                            source={images[1]}
-                                            placeholder={require('../../assets/brokenImage400.svg')}
+                                            source={images[0]}
+                                            placeholder={require('../../assets/brokenImage200.svg')}
                                             style={{ width: '100%', height: '100%' }}
                                             contentFit='cover'
                                             placeholderContentFit="cover"
                                         />
                                     </TouchableOpacity>
 
-                                    <TouchableOpacity
-                                        style={{ width: '100%', aspectRatio: 1 }}
-                                        onPress={() => setActiveIndex(2)}
-                                    >
-                                        <Image
-                                            source={images[2]}
-                                            placeholder={require('../../assets/brokenImage400.svg')}
-                                            style={{ width: '100%', height: '100%' }}
-                                            contentFit='cover'
-                                            placeholderContentFit="cover"
+                                    <View style={{ width: '33.33%' }}>
+                                        <TouchableOpacity
+                                            style={{ width: '100%', aspectRatio: 1 }}
+                                            onPress={() => setActiveIndex(1)}
+                                        >
+                                            <Image
+                                                source={images[1]}
+                                                placeholder={require('../../assets/brokenImage400.svg')}
+                                                style={{ width: '100%', height: '100%' }}
+                                                contentFit='cover'
+                                                placeholderContentFit="cover"
+                                            />
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            style={{ width: '100%', aspectRatio: 1 }}
+                                            onPress={() => setActiveIndex(2)}
+                                        >
+                                            <Image
+                                                source={images[2]}
+                                                placeholder={require('../../assets/brokenImage400.svg')}
+                                                style={{ width: '100%', height: '100%' }}
+                                                contentFit='cover'
+                                                placeholderContentFit="cover"
+                                            />
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+
+                                <View style={[styles.info, { marginTop: '4%' }]}>
+                                    <View style={styles.tag}>
+                                        <MaterialIcons
+                                            name='group'
+                                            size={24}
+                                            color={color}
                                         />
-                                    </TouchableOpacity>
+
+                                        <Text style={[styles.tagText, { color: color }]}>Participantes:</Text>
+                                    </View>
+                                        
+                                    <Text style={styles.subText}>{personCount}</Text>
                                 </View>
-                            </View>
 
-                            <View style={styles.info}>
-                                <View style={styles.tag}>
-                                    <MaterialIcons
-                                        name='group'
-                                        size={24}
-                                        color={color}
-                                    />
+                                <View style={styles.info}>
+                                    <View style={styles.tag}>
+                                        <Image
+                                            placeholder={require('../../assets/person/personAnimais.svg')}
+                                            style={styles.avatar}
+                                            contentFit="contain"
+                                            placeholderContentFit="contain"
+                                        />
 
-                                    <Text style={[styles.tagText, { color: color }]}>Participantes:</Text>
+                                        <Text style={[styles.tagText, { color: color }]}>{username}</Text>
+                                    </View>
                                 </View>
-                                    
-                                <Text style={styles.subText}>{personCount}</Text>
-                            </View>
+                                
+                                {isSubscribed && (
+                                    <View style={[styles.tag, { marginTop: '4%' }]}>
+                                        <Button
+                                            text={'Cancelar Participação'}
+                                            color={color}
+                                            flex={true}
+                                            onPress={() => setIsOpen(true)}
+                                        />
 
-                            <View style={styles.info}>
-                                <View style={styles.tag}>
-                                    <Image
-                                        placeholder={require('../../assets/person/personAnimais.svg')}
-                                        style={styles.avatar}
-                                        contentFit="contain"
-                                        placeholderContentFit="contain"
-                                    />
+                                        <TouchableOpacity>
+                                            <MaterialCommunityIcons
+                                                name='message-text'
+                                                size={40}
+                                                color={color}
+                                            />
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
 
-                                    <Text style={[styles.tagText, { color: color }]}>{username}</Text>
-                                </View>
-                            </View>
+                                {!isSubscribed && (
+                                    <View style={styles.tag}>
+                                        <Button
+                                            text={'Pedir para Participar'}
+                                            color={color}
+                                            flex={true}
+                                        />
 
-                            {isSubscribed && (
-                                <View>
-                                    <Text>a</Text>
-                                </View>
-                            )}
-
-                            {!isSubscribed && (
-                                <View>
-                                    <Text>b</Text>
-                                </View>
-                            )}
+                                        <TouchableOpacity>
+                                            <MaterialCommunityIcons
+                                                name='message-text'
+                                                size={40}
+                                                color={color}
+                                            />
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </ScrollView>
+                            
                         </View>
-                    </TouchableWithoutFeedback>
                 </View>
-            </TouchableWithoutFeedback>
         </Modal>
 
         <Modal
@@ -232,7 +286,7 @@ export default function TaskPopUp({ visible, onClose, color, taskIcon, name, des
                                                 }}
                                             />
                                         </View>
-                                    </TouchableWithoutFeedback>
+                                        </TouchableWithoutFeedback>
                                 </TouchableOpacity>
                             </View>
                         );
@@ -253,14 +307,28 @@ const styles = StyleSheet.create({
 
         backgroundColor: Colors.b25
     },
+    backdropTouch: {
+        position: 'absolute',
+
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0
+    },
     container: {
         backgroundColor: Colors.background,
         borderRadius: 24,
 
-        padding: '5%',
         width: '85%',
         maxHeight: '85%',
 
+        overflow: 'hidden'
+    },
+    scrollContainer: {
+        width: '100%'
+    },
+    scrollContent: {
+        padding: '5%',
         alignItems: 'center'
     },
     tag: {
@@ -271,7 +339,7 @@ const styles = StyleSheet.create({
     },
     info: {
         width: '100%',
-        paddingVertical: '1%'
+        paddingBottom: '4%'
     },
     imageView: {
         flexDirection: 'row',
@@ -312,7 +380,9 @@ const styles = StyleSheet.create({
     // Text
     taskName: {
         fontFamily: Fonts.condensedBlack,
-        fontSize: 24
+        fontSize: 24,
+        
+        flex: 1
     },
     subText: {
         fontFamily: Fonts.regular,

@@ -55,7 +55,7 @@ export default function HomeScreen({ navigation }) {
                     >
                         <TaskBox
                             taskType={'animais'}
-                            name={'resgate de gatos'}
+                            name={'resgate de gatos no fundo do lugar tal'} //Máx. 30
                             description={'Resgate de gatos perto do bairro X na rua Y. Se puder, leve coisa Z e item W.'}
                             date={'08/07/2026'}
                             showDate={false} // Automatizar pra checar em qual screen ele tá
@@ -64,7 +64,7 @@ export default function HomeScreen({ navigation }) {
                             address={'Novo Hamburgo'}
                             registeredPeople={'2'}
                             personLimit={'4'}
-                            username={'João Barros'}
+                            username={username}
                         />
                     </ToggleList>
                 </View>

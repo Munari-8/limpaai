@@ -69,7 +69,7 @@ export default function TaskBox({ taskType, showTaskType=true, name, description
                         size={96}
                     />
 
-                    <View>
+                    <View style={styles.textContainer}>
                         <Text
                             style={styles.text1}
                             numberOfLines={1}
@@ -129,11 +129,15 @@ export default function TaskBox({ taskType, showTaskType=true, name, description
 }
 
 const styles = StyleSheet.create({
+    // View
     container: {
         flexDirection: 'row',
 
         padding: '5%',
         borderRadius: 16
+    },
+    textContainer: {
+        flex: 1
     },
 
     // Text

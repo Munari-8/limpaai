@@ -1,26 +1,36 @@
 import { StyleSheet, TouchableOpacity, Text } from 'react-native'
 
 // Componentes locais
-import { Fonts } from './Theme'
+import { Colors, Fonts } from './Theme'
 
-export default function Button({ text, color = '#000000', onPress }) {
+export default function Button({ text, color = Colors.black, flex = false, onPress }) {
+    let flexB = 0
+    let width = '80%'
+
+    if (flex) {
+        flexB = 1
+        width = 'auto'
+    }
+
     return (
-        <TouchableOpacity style={styles.button(color)} onPress={onPress}>
+        <TouchableOpacity style={styles.button(color, flexB, width)} onPress={onPress}>
             <Text style={styles.text}>{text}</Text>
         </TouchableOpacity>
     )
 }
 
 const styles = StyleSheet.create({
-    button: (color) => ({
+    button: (color, flexB, width) => ({
         backgroundColor: color,
 
         padding: 8,
-        width: '80%',
         borderRadius: 100,
 
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+
+        flex: flexB,
+        width: width
     }),
     text: {
         color: '#ffffff',

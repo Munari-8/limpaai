@@ -62,5 +62,7 @@ export const Fonts = {
     regular: 'Roboto-Regular',
     medium: 'Roboto-Medium',
     bold: 'Roboto-Bold',
+
+    condensedSemiBold: 'Roboto-Condensed-SemiBold',
     condensedBlack: 'Roboto-Condensed-Black'
 };
