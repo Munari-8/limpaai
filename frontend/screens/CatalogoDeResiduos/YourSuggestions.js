@@ -31,9 +31,6 @@ export default function YourSuggestionsScreen() {
                                     currentState={'pending'}
                                     why={'Não foi aprovado por piriri, póróró, parara e tururu.'}
                                 />
-
-                                <WasteBox/>
-                                <WasteBox/>
                             </View>
                         </ToggleList>
 
@@ -63,25 +60,19 @@ const styles = StyleSheet.create({
     // View
     innerContainer: {
         flex: 1,
-        position: 'relative',
 
         backgroundColor: Colors.background,
 
-        alignItems: 'center',
-        justifyContent: 'center',
-
-        paddingVertical: '5%',
         paddingHorizontal: '5%'
     },
     suggestionsList: {
         width: '100%',
-        height: '100%',
 
-        top: '10%',
+        paddingVertical: 96,
+
         gap: 8
     },
     suggestionsContainer: {
-        flex: 1,
         flexDirection: 'row',
         flexWrap: 'wrap',
         rowGap: 13.75,
@@ -93,7 +84,11 @@ const styles = StyleSheet.create({
 
     // Text
     textDefault: {
+        flex: 1,
         fontFamily: Fonts.light,
-        textAlign: 'center'
+
+        textAlign: 'center',
+        textAlignVertical: 'center',
+        marginTop: '50%'
     }
 })

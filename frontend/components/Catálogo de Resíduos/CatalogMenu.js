@@ -4,7 +4,6 @@ import { useNavigation } from '@react-navigation/native';
 
 // Expo
 import { Image } from "expo-image";
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 // Local
 import { Colors, Fonts } from "../Theme";
