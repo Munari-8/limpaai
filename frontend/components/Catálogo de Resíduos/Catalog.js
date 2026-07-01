@@ -1,15 +1,8 @@
 import React from "react";
 import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
 
-// Expo
-import { MaterialIcons } from '@expo/vector-icons'
-import { Image } from "expo-image";
-
 // Local
-import { Colors, Fonts } from "../Theme";
-import Header from '../Header'
 import HeaderCatalog from "./HeaderCatalog";
-import Wastes from "./Wastes";
 
 export default function Catalog({ children, titleHeader, image }) {
     const text = titleHeader.toUpperCase();

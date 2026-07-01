@@ -14,10 +14,7 @@ export default function VidroScreen() {
                 <Catalog
                     titleHeader={'vidro'}
                 >
-                    <Wastes/>
-                    <Wastes/>
-                    <Wastes/>
-                    <Wastes/>
+                    
                 </Catalog>
             </View>
         </ScreenWrapper>

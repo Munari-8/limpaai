@@ -23,21 +23,34 @@ export default function YourSuggestionsScreen() {
                         <ToggleList
                             text={'Sugestões Pendentes'}
                         >
-                            <WasteBox
-                                
-                            />
+                            <View style={styles.suggestionsContainer}>
+                                <WasteBox
+                                    name={'Resíduo épico'}
+                                    type={'vidro'}
+                                    description={'Descrição super híper legal.'}
+                                    currentState={'pending'}
+                                    why={'Não foi aprovado por piriri, póróró, parara e tururu.'}
+                                />
+
+                                <WasteBox/>
+                                <WasteBox/>
+                            </View>
                         </ToggleList>
 
                         <ToggleList
                             text={'Sugestões Aprovadas'}
                         >
-
+                            <WasteBox
+                                type={'plastico'}
+                            />
                         </ToggleList>
 
                         <ToggleList
                             text={'Sugestões Reprovadas'}
                         >
-
+                            <WasteBox
+                                type={'naoReciclavel'}
+                            />
                         </ToggleList>
                     </View>
                 )}
@@ -61,7 +74,21 @@ const styles = StyleSheet.create({
         paddingHorizontal: '5%'
     },
     suggestionsList: {
-        width: '100%'
+        width: '100%',
+        height: '100%',
+
+        top: '10%',
+        gap: 8
+    },
+    suggestionsContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        rowGap: 13.75,
+        
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'space-between'
     },
 
     // Text

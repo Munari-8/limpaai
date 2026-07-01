@@ -14,7 +14,7 @@ export default function NaoReciclavelScreen() {
                 <Catalog
                     titleHeader={'NÃO RECICLÁVEL'}
                 >
-                    
+                    <Wastes/>
                 </Catalog>
             </View>
         </ScreenWrapper>
