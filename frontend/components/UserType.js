@@ -99,7 +99,7 @@ export default function UserType({ wasViewed, userName, taskType }) {
                 </TouchableOpacity>
             
                 {isOpen && (
-                    <View style={[styles.eventName, { backgroundColor: Colors.b50 }, getTooltipPositionStyle()]}>
+                    <View style={[styles.eventName, getTooltipPositionStyle()]}>
                         <Text style={styles.eventText}>Nome do Evento</Text>
                     </View>
                 )}
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     eventName: {
         position: 'absolute',
 
-        backgroundColor: Colors.b25,
+        backgroundColor: Colors.b50,
         borderRadius: 100,
 
         paddingHorizontal: 12,

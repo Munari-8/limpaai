@@ -39,6 +39,8 @@ const styles = StyleSheet.create({
         fontSize: 16
     },
     taskList: {
+        gap: 16,
         
+        paddingTop: 8
     }
 })

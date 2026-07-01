@@ -34,6 +34,7 @@ import PlasticoScreen from './screens/CatalogoDeResiduos/Plastico';
 import PapelScreen from './screens/CatalogoDeResiduos/Papel';
 import OrganicoScreen from './screens/CatalogoDeResiduos/Organico';
 import NaoReciclavel from './screens/CatalogoDeResiduos/NaoReciclavel';
+import YourSuggestionsScreen from './screens/CatalogoDeResiduos/YourSuggestions';
 
 import MainMuralScreen from './screens/MuralDeServicos/MainMural';
 
@@ -53,6 +54,8 @@ function CatalogStackNavigator() {
       <CatalogStack.Screen name='MainCatalogoScreen' component={MainCatalogoScreen}/>
 
       <CatalogStack.Screen name='CatalogoDeResiduos' component={CatalogoDeResiduos}/>
+
+      <CatalogStack.Screen name='YourSuggestions' component={YourSuggestionsScreen}/>
     </CatalogStack.Navigator>
   );
 }
@@ -63,6 +66,8 @@ function MainAppTabs() {
     Home: 'Página Inicial',
     Inbox: 'Mensagens',
     MainCatalogo: 'Catálogo de Resíduos',
+    MainCatalogoScreen: 'Catálogo de Resíduos',
+    YourSuggestions: 'Suas Sugestões',
     MainMural: 'Mural de Serviços'
   };
 
@@ -70,7 +75,11 @@ function MainAppTabs() {
     <View style={styles.container}>
       <Tab.Navigator
         tabBar={(props) => {
-          const activeRouteName = props.state.routes[props.state.index].name;
+          const route = props.state.routes[props.state.index];
+
+          const nestedRouteName = getFocusedRouteNameFromRoute(route);
+
+          const activeRouteName = nestedRouteName || route.name;
 
           return (
             <>

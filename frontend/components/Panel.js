@@ -1,5 +1,6 @@
 import React  from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigationState } from '@react-navigation/native';
 
 // Expo
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,8 +9,14 @@ import { LinearGradient } from "expo-linear-gradient";
 // Componentes locais
 import { Colors } from "./Theme";
 
-export default function Panel({ state, navigation }) {
-    const currentRouteName = state ? state.routes[state.index].name : '';
+export default function Panel({ navigation }) {
+    const currentRouteName = useNavigationState(state => {
+        let route = state;
+        while (route.routes && route.routes[route.index]) {
+            route = route.routes[route.index];
+        }
+        return route.name;
+    })
 
     // Muda a cor do icon relativo a página atual
     const getIconColor = (screenNames)=> {
@@ -55,7 +62,7 @@ export default function Panel({ state, navigation }) {
                 <MaterialCommunityIcons
                     name={getIconName('MainCatalogo', 'trash-can')}
                     size={40}
-                    color={getIconColor(['MainCatalogo'])}
+                    color={getIconColor(['MainCatalogo', 'CatalogoDeResiduos', 'YourSuggestions'])}
                 />
             </TouchableOpacity>
 
@@ -79,7 +86,7 @@ const styles = StyleSheet.create({
         width: '92%',
         height: 64,
 
-        borderRadius: 100,
+        borderRadius: 1000,
 
         flexDirection: 'row',
         justifyContent: 'space-evenly',

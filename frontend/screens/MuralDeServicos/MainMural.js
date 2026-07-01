@@ -13,8 +13,6 @@ import TaskBox from "../../components/Serviços/TaskBox";
 export default function MainMuralScreen() {
     const [isOpen, setIsOpen] = useState(true);
 
-    const showTaskType = false
-
     return (
         <ScreenWrapper>
             <View style={styles.innerContainer}>
@@ -24,12 +22,13 @@ export default function MainMuralScreen() {
                     >
                         <TaskBox
                             taskType={'animais'}
-                            showTaskType={showTaskType}
                             name={'SERVIÇO'}
-                            date={'30/06/2026'}
+                            description={'Descrição.'}
+                            date={'dd/mm/aaaa'}
                             startTime={'00:00'}
                             endTime={'00:00'}
-                            address={'São Leopoldo'}
+                            address={'Endereço'}
+                            username={'Usuário'}
                         />
                     </ToggleList>
 

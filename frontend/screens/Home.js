@@ -13,12 +13,14 @@ import ToggleList from "../components/ToggleList";
 import TaskBox from "../components/Serviços/TaskBox";
 
 export default function HomeScreen({ navigation }) {
-    const name = 'usuário' // Vai ser recebido como 'name' no futuro
+    const username = 'Usuário' // Vai ser recebido como 'name' no futuro
+
+    const showDateTag = true
 
     
     const [isOpen, setIsOpen] = useState(true);
         
-    const username = name.toUpperCase();
+    const usernameTitle = username.toUpperCase();
 
     return (
         <ScreenWrapper>
@@ -32,7 +34,7 @@ export default function HomeScreen({ navigation }) {
                         placeholderContentFit="cover"
                     />
                     <Text style={styles.text2}>BEM-VINDO(A),</Text>
-                    <Text style={styles.textUsername}>{username}</Text>
+                    <Text style={styles.textUsername}>{usernameTitle}</Text>
 
                     <Text style={styles.text1}>
                         <Text style={styles.serviceCounterText}>0 </Text>
@@ -65,6 +67,37 @@ export default function HomeScreen({ navigation }) {
                             registeredPeople={'2'}
                             personLimit={'4'}
                             username={username}
+                            showDateTag={showDateTag}
+                        />
+
+                        <TaskBox
+                            taskType={'hortas'}
+                            name={'plantio de limoeiros no parque tal'} //Máx. 30
+                            description={'Plantio de limoeiros no parque A, rua B, bairro C. Por favor levar utensílio D.'}
+                            date={'23/07/2026'}
+                            showDate={false} // Automatizar pra checar em qual screen ele tá
+                            startTime={'19:00'}
+                            endTime={'20:30'}
+                            address={'Campo Bom'}
+                            registeredPeople={'3'}
+                            personLimit={'6'}
+                            username={username}
+                            showDateTag={showDateTag}
+                        />
+
+                        <TaskBox
+                            taskType={'limpeza'}
+                            name={'limpeza de lixo no rio tal'} //Máx. 30
+                            description={'Olha que descrição daora, legal, bacana, interessante e bela.'}
+                            date={'18/08/2026'}
+                            showDate={false} // Automatizar pra checar em qual screen ele tá
+                            startTime={'08:30'}
+                            endTime={'11:30'}
+                            address={'Novo Hamburgo'}
+                            registeredPeople={'5'}
+                            personLimit={'10'}
+                            username={username}
+                            showDateTag={showDateTag}
                         />
                     </ToggleList>
                 </View>
@@ -83,15 +116,20 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
 
         paddingVertical: '5%',
-        paddingHorizontal: '5%'
+        paddingHorizontal: '5%',
+        marginTop: 40,
+        marginBottom: 76
     },
     main: {
-        top: '12%',
         width: '100%',
         alignItems: 'center',
-        marginBottom: '32%'
+
+        marginTop: 40,
+        marginBottom: 24,
+        flexShrink: 0
     },
     tasks: {
+        flex: 1,
         width: '100%'
     },
 

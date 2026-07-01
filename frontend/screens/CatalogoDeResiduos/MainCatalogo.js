@@ -5,11 +5,14 @@ import { StyleSheet, View, Text } from "react-native";
 import { Colors, Fonts } from "../../components/Theme";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import Wastes from "../../components/Catálogo de Resíduos/Wastes";
+import CatalogMenu from "../../components/Catálogo de Resíduos/CatalogMenu";
 
 export default function MainCatalogoScreen() {
     return (
         <ScreenWrapper>
             <View style={styles.innerContainer}>
+                <CatalogMenu/>
+
                 <View style={styles.main}>
                     <Wastes
                         color={Colors.vidro}
@@ -55,6 +58,7 @@ export default function MainCatalogoScreen() {
 const styles = StyleSheet.create({
     innerContainer: {
         flex: 1,
+        position: 'relative',
 
         backgroundColor: Colors.background,
 
