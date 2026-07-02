@@ -65,7 +65,7 @@ export default function AddWastePopUp({ visible, onClose }) {
                         <Text style={styles.textTag}>Anexar imagem</Text>
                     </View>
 
-                    <View style={{ width: '100%', marginTop: 24 }}>
+                    <View style={{ width: '100%', marginTop: 24, flexDirection: 'row' }}>
                         <Button
                             text={'Enviar Sugestão'}
                             flex={true}

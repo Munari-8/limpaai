@@ -27,6 +27,8 @@ export default function FormInput2({ placeholder, value, setValue, characterLimi
 const styles = StyleSheet.create({
     container: {
         width: '100%',
+        
+        marginBottom: 12
     },
     input: {
         fontSize: 14,
@@ -35,6 +37,9 @@ const styles = StyleSheet.create({
 
         borderBottomWidth: 1.5,
         borderBottomColor: Colors.black,
+
+        height: 28,
+        paddingVertical: 0,
 
         paddingBottom: 3,
     },

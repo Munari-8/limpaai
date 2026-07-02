@@ -4,7 +4,7 @@ import { StyleSheet, TouchableOpacity, Text } from 'react-native'
 import { Colors, Fonts } from './Theme'
 
 export default function Button({ text, color = Colors.black, flex = false, onPress }) {
-    let flexB = 0
+    let flexB = ''
     let width = '80%'
 
     if (flex) {
