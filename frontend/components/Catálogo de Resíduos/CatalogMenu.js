@@ -7,14 +7,22 @@ import { Image } from "expo-image";
 
 // Local
 import { Colors, Fonts } from "../Theme";
+import AddWastePopUp from "./AddWastePopUp";
 
 export default function CatalogMenu() {
     const navigation = useNavigation();
 
     const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
 
+    const [isOpen, setIsOpen] = useState(false);
+
     return (
         <View style={styles.container}>
+            <AddWastePopUp
+                visible={isOpen}
+                onClose={() => setIsOpen(false)}
+            />
+
             {isSubMenuOpen && (
                 <View style={{ gap: 8, alignItems: 'flex-end' }}>
                     <TouchableOpacity
@@ -27,7 +35,10 @@ export default function CatalogMenu() {
                         <Text style={styles.submenuText}>Suas sugestões</Text>
                     </TouchableOpacity>
                 
-                    <TouchableOpacity style={styles.submenuBox}>
+                    <TouchableOpacity
+                        style={styles.submenuBox}
+                        onPress={() => setIsOpen(true)}    
+                    >
                         <Text style={styles.submenuText}>Criar sugestão</Text>
                     </TouchableOpacity>
                 </View>
@@ -85,7 +96,7 @@ const styles = StyleSheet.create({
 
     // Outro
     icon: {
-        width: '66.6%',
-        height: '66.6%'
+        width: '66.66%',
+        height: '66.66%'
     }
 })

@@ -22,6 +22,18 @@ export default function WastePopUp({ visible, onClose, name, type, description, 
 
     const color = mappingColor[type] || Colors.naoReciclavel;
 
+    // Define o ícone baseado no tipo do resíduo
+    const mappingIcon = {
+        vidro : 'glass-fragile',
+        metal: 'anvil',
+        plastico: 'bottle-soda',
+        papel: 'package-variant-closed',
+        organico: 'food-apple',
+        naoReciclavel: 'delete-off'
+    }
+
+    const typeIcon = mappingIcon[type];
+
     // Formata a escrita do tipo do resíduo
     const mappingType = {
         vidro: 'Vidro',
@@ -65,7 +77,15 @@ export default function WastePopUp({ visible, onClose, name, type, description, 
                     <View style={{ alignItems: 'center', marginVertical: '2.5%' }}>
                         <Text style={styles.textName}>{name}</Text>
 
-                        <Text style={[styles.textType, { color: color }]}>{formattedType}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <MaterialCommunityIcons
+                                name={typeIcon}
+                                size={24}
+                                color={color}
+                            />
+                            
+                            <Text style={[styles.textType, { color: color }]}>{formattedType}</Text>
+                        </View>
                     </View>
                     
                     <Text style={styles.textDescription}>{description}</Text>
@@ -259,7 +279,7 @@ const styles = StyleSheet.create({
     },
     textType: {
         fontFamily: Fonts.bold,
-        fontSize: 16
+        fontSize: 16,
     },
     textDescription: {
         fontFamily: Fonts.light,

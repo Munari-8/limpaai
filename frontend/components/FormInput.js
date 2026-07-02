@@ -10,10 +10,7 @@ export default function FormInput({ placeholder, value, setValue, secureTextEntr
     return (
         <View style={styles.container}>
             <TextInput
-                style={[
-                    styles.input,
-                    {fontFamily: isPlaceholderActive ? Fonts.light : Fonts.regular}
-                ]}
+                style={[ styles.input, { fontFamily: isPlaceholderActive ? Fonts.light : Fonts.regular }]}
                 placeholder={placeholder}
                 value={value}
                 onChangeText={setValue}

@@ -33,9 +33,9 @@ export default function Panel({ navigation }) {
 
     return (
         <LinearGradient
-            colors={[Colors.b10, Colors.b25]}
+            colors={[Colors.b25, Colors.b25]}
 
-            start={{ x: 0, y: 1 }}
+            start={{ x: 1, y: 1 }}
             end={{ x: 1, y: 0 }}
 
             style={styles.container}

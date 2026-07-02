@@ -1,31 +1,51 @@
 import React, { useState } from "react";
-import { StyleSheet, Touchable, TouchableOpacity, View } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 // Expo
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 
 // Local
 import { Colors, Fonts } from "../Theme";
+import AddWastePopUp from "./AddWastePopUp";
  
 export default function CatalogAddMenu() {
-    const navigation = useNavigation();
+    const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <TouchableOpacity
-            style={styles.button}
-
-        >
-            <MaterialCommunityIcons
-            
+        <>
+            <AddWastePopUp
+                visible={isOpen}
+                onClose={() => setIsOpen(false)}
             />
 
-        </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.button}
+                onPress={() => setIsOpen(true)}
+            >
+                <MaterialIcons
+                    name='add'
+                    size={64}
+                    color={Colors.white}
+                />
+            </TouchableOpacity>
+        </>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    button: {
+        position: 'absolute',
+        zIndex: 8,
+
+        bottom: '11.9%',
+        right: '4.6%',
         
+        borderRadius: 40,
+        width: 80,
+        height: 80,
+        backgroundColor: Colors.black,
+
+        alignItems: 'center',
+        justifyContent: 'center'
     }
 })

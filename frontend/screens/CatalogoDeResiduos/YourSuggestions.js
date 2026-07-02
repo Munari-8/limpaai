@@ -7,6 +7,7 @@ import CatalogMenu from "../../components/Catálogo de Resíduos/CatalogMenu";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import ToggleList from "../../components/ToggleList";
 import WasteBox from "../../components/Catálogo de Resíduos/WasteBox";
+import CatalogAddMenu from "../../components/Catálogo de Resíduos/CatalogAddMenu";
 
 export default function YourSuggestionsScreen() {
     const [isAnyWaste, setIsAnyWaste] = useState(false);
@@ -14,6 +15,8 @@ export default function YourSuggestionsScreen() {
     return (
         <ScreenWrapper>
             <View style={styles.innerContainer}>
+                <CatalogAddMenu/>
+
                 {isAnyWaste && (
                     <Text style={styles.textDefault}>Você ainda não enviou nenhuma sugestão... Contribua agora mesmo!</Text>
                 )}
