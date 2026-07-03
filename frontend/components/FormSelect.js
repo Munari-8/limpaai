@@ -7,13 +7,29 @@ import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 // Local
 import { Colors, Fonts } from "./Theme";
 
-export default function FormSelect({ placeholder, options, selectedValue, onSelect }) {
+export default function FormSelect({ placeholder, options, selectedValue, onSelect, isWaste }) {
     const [isOpen, setIsOpen] = useState(false);
 
     const handleSelect = (item) => {
         onSelect(item);
         setIsOpen(false);
     };
+
+    // Gere a cor do tipo selecionado caso for relacionado aos resíduos
+    let selectedTextColor = Colors.black;
+    const mappingSelectedTextColor = {
+        'vidro': Colors.vidro,
+        'metal': Colors.metal,
+        'plastico': Colors.plastico,
+        'papel': Colors.papel,
+        'organico': Colors.organico,
+        'naoReciclavel': Colors.naoReciclavel
+    }
+
+    if (isWaste && selectedValue) {
+        const key = selectedValue.toLowerCase();
+        selectedTextColor = mappingSelectedTextColor[key] || Colors.black;
+    }
 
     return (
         <View style={styles.container}>
@@ -29,7 +45,7 @@ export default function FormSelect({ placeholder, options, selectedValue, onSele
                 <MaterialIcons
                     name={isOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
                     size={24}
-                    color={Colors.black}
+                    color={Colors.b50}
                 />
             </TouchableOpacity>
 
@@ -60,7 +76,7 @@ const styles = StyleSheet.create({
     container: {
         width: '100%',
         marginBottom: 16,
-        zIndex: 100
+        zIndex: 64
     },
     selectTrigger: {
         flexDirection: 'row',
@@ -84,9 +100,10 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.background,
         borderRadius: 16,
         marginTop: 6,
+        paddingVertical: 6,
 
         overflow: 'hidden',
-        zIndex: 200,
+        zIndex: 128,
 
         elevation: 16,
         shadowColor: Colors.black,
@@ -95,13 +112,15 @@ const styles = StyleSheet.create({
         shadowRadius: 5
     },
     optionItem: {
-        paddingVertical: 2,
+        alignItems: 'center',
+
+        paddingVertical: 3,
         paddingHorizontal: 8,
 
         backgroundColor: Colors.background
     },
     optionItemSelected: {
-        backgroundColor: Colors.formInputBg
+        backgroundColor: Colors.formInputBg,
     },
 
     // Text

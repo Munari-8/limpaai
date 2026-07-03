@@ -52,7 +52,7 @@ export default function AddWastePopUp({ visible, onClose }) {
 
                     <View style={styles.tag}>
                         <MaterialIcons
-                            name='image'
+                            name='bookmark'
                             size={24}
                         />
 
