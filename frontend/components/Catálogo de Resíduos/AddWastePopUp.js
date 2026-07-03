@@ -9,6 +9,7 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Colors, Fonts } from "../Theme";
 import FormInput2 from "../FormInput2";
 import Button from '../Button';
+import FormSelect from '../FormSelect';
 
 export default function AddWastePopUp({ visible, onClose }) {
     const [name, setName] = useState('');
@@ -57,6 +58,13 @@ export default function AddWastePopUp({ visible, onClose }) {
 
                         <Text style={styles.textTag}>Tipo do Resíduo</Text>
                     </View>
+
+                    <FormSelect
+                        placeholder={'Selecione o tipo do resíduo'}
+                        options={typeList}
+                        selectedValue={wasteType}
+                        onSelect={setWasteType}
+                    />
 
                     <View style={styles.tag}>
                         <MaterialIcons
