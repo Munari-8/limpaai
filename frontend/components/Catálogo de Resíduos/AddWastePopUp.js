@@ -13,6 +13,16 @@ import Button from '../Button';
 export default function AddWastePopUp({ visible, onClose }) {
     const [name, setName] = useState('');
     const [notes, setNotes] = useState('');
+    const [wasteType, setWasteType] = useState('');
+
+    const typeList = [
+        'Vidro',
+        'Metal',
+        'Plástico',
+        'Papel',
+        'Orgânico',
+        'Não Reciclável'
+    ]
 
     return (
         <Modal
@@ -39,13 +49,22 @@ export default function AddWastePopUp({ visible, onClose }) {
                         setValue={setName}
                     />
 
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, width: '100%' }}>
+                    <View style={styles.tag}>
+                        <MaterialIcons
+                            name='image'
+                            size={24}
+                        />
+
+                        <Text style={styles.textTag}>Tipo do Resíduo</Text>
+                    </View>
+
+                    <View style={styles.tag}>
                         <MaterialIcons
                             name='edit'
                             size={24}
                         />
 
-                        <Text style={styles.textTag}>Observações:</Text>
+                        <Text style={styles.textTag}>Observações</Text>
                     </View>
 
                     <FormInput2
@@ -56,7 +75,7 @@ export default function AddWastePopUp({ visible, onClose }) {
                         setValue={setNotes}
                     />
 
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, width: '100%' }}>
+                    <View style={styles.tag}>
                         <MaterialIcons
                             name='image'
                             size={24}
@@ -105,6 +124,12 @@ const styles = StyleSheet.create({
         padding: '5%',
         alignItems: 'center',
         overflow: 'hidden'
+    },
+    tag: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 2,
+        width: '100%'
     },
 
     // Text
