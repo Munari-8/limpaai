@@ -23,6 +23,7 @@ import PasswordRecoveryCodeScreen from './screens/passwordRecovery/PasswordRecov
 import PasswordRecoveryChangeScreen from './screens/passwordRecovery/PasswordRecoveryChange';
 
 import HomeScreen from './screens/Home';
+import EditProfile from './screens/EditProfile';
 
 import InboxScreen from './screens/Messages/Inbox';
 import ChatScreen from './screens/Messages/Chat';
@@ -157,7 +158,6 @@ export default function App() {
     return null;
   }
 
-  // Deslogado; Auth screens
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -189,7 +189,6 @@ export default function App() {
           options={{ headerShown: false }}
         />
 
-        {/* CatalogoDeResiduos */}
         <Stack.Screen
           name='CatalogoDeResiduos'
           component={CatalogoDeResiduos}
