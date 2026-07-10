@@ -12,7 +12,9 @@ import FormInput from '../../components/FormInput';
 import ScreenWrapper from '../../components/ScreenWrapper';
 
 // const API_URL = `http://192.168.0.239:3000`;
-const API_URL = `http://10.81.46.69:3000`;
+// const API_URL = `http://10.81.46.69:3000`;
+
+const API_URL = `http://10.81.46.198:3000`;
 
 const signupSchema = Yup.object().shape({
     name: Yup.string()

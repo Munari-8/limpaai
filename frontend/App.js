@@ -10,8 +10,10 @@ import { createMaterialTopTabNavigator } from '@react-navigation/material-top-ta
 import { useFonts, Roboto_300Light, Roboto_400Regular, Roboto_500Medium, Roboto_700Bold} from '@expo-google-fonts/roboto';
 
 // Local
+import { Colors } from './components/Theme';
 import Panel from './components/Panel';
 import Header from './components/Header';
+import { AuthProvider } from './contexts/AuthContext';
 
 // Screens
 import WelcomeScreen from './screens/auth/Welcome';
@@ -38,8 +40,6 @@ import NaoReciclavel from './screens/CatalogoDeResiduos/NaoReciclavel';
 import YourSuggestionsScreen from './screens/CatalogoDeResiduos/YourSuggestions';
 
 import MainMuralScreen from './screens/MuralDeServicos/MainMural';
-
-import { Colors } from './components/Theme';
 
 const Stack = createNativeStackNavigator();
 const Tab = createMaterialTopTabNavigator();
@@ -159,48 +159,59 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerShadowVisible: false,
-          headerTitle: '',
-          headerStyle: {
-            backgroundColor: Colors.background
-          }
-        }}
-      >
-        <Stack.Screen name='Welcome' component={WelcomeScreen}/>
-        <Stack.Screen name='SignUp' component={SignUpScreen}/>
-        <Stack.Screen name='Login' component={LoginScreen}/>
+    <AuthProvider>
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerShadowVisible: false,
+            headerTitle: '',
+            headerStyle: {
+              backgroundColor: Colors.background
+            }
+          }}
+        >
+          <Stack.Screen name='Welcome' component={WelcomeScreen}/>
+          <Stack.Screen name='SignUp' component={SignUpScreen}/>
+          <Stack.Screen name='Login' component={LoginScreen}/>
 
-        <Stack.Screen name='PasswordRecoveryEmail' component={PasswordRecoveryEmailScreen}/>
-        <Stack.Screen name='PasswordRecoveryCode' component={PasswordRecoveryCodeScreen}/>
-        <Stack.Screen name='PasswordRecoveryChange' component={PasswordRecoveryChangeScreen}/>
+          <Stack.Screen name='PasswordRecoveryEmail' component={PasswordRecoveryEmailScreen}/>
+          <Stack.Screen name='PasswordRecoveryCode' component={PasswordRecoveryCodeScreen}/>
+          <Stack.Screen name='PasswordRecoveryChange' component={PasswordRecoveryChangeScreen}/>
 
-        <Stack.Screen
-          name='MainApp'
-          component={MainAppTabs}
-          options={{headerShown: false }}
-        />
+          <Stack.Screen
+            name='MainApp'
+            component={MainAppTabs}
+            options={{headerShown: false }}
+          />
 
-        <Stack.Screen
-          name='Chat'
-          component={ChatScreen}
-          options={{ headerShown: false }}
-        />
+          <Stack.Screen
+            name='Chat'
+            component={ChatScreen}
+            options={{ headerShown: false }}
+          />
 
-        <Stack.Screen
-          name='CatalogoDeResiduos'
-          component={CatalogoDeResiduos}
-          options={{ headerShown: false }}
-        />
+          <Stack.Screen
+            name='CatalogoDeResiduos'
+            component={CatalogoDeResiduos}
+            options={{ headerShown: false }}
+          />
 
-        <Stack.Screen
-          name='EditProfile'
-          component={EditProfile}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+          <Stack.Screen
+            name='EditProfile'
+            component={EditProfile}
+            options={{
+              headerShown: true,
+              headerTitle: 'Editar perfil',
+              headerTitleAlign: 'center',
+              headerTitleStyle: {
+                fontFamily: 'Roboto-Bold',
+                fontSize: 20
+              }
+            }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </AuthProvider>
     );
 }
 

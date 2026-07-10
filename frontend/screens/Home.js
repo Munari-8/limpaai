@@ -12,17 +12,18 @@ import ToggleList from "../components/ToggleList";
 import TaskBox from "../components/Serviços/TaskBox";
 import EditProfile from "./EditProfile";
 import Avatar from "../components/Avatar";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function HomeScreen({ navigation }) {
-    const username = 'usuário' // Vai ser recebido como 'name' no futuro
+    const { user } = useAuth();
+
+    const username = user?.nome_exibicao || (user?.nome ? user.nome.trim().split(/\s+/)[0] : 'USUÁRIO');
+    const usernameTitle = username.toUpperCase();
 
     const showDateTag = true
-
     
     const [isOpen, setIsOpen] = useState(true);
         
-    const usernameTitle = username.toUpperCase();
-
     return (
         <ScreenWrapper>
             <View style={styles.innerContainer}>

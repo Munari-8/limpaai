@@ -7,11 +7,18 @@ import { Colors, Fonts } from '../../components/Theme';
 import LogoTitle from '../../components/LogoTitle';
 import FormInput from '../../components/FormInput';
 import ScreenWrapper from '../../components/ScreenWrapper';
+import { useAuth } from '../../contexts/AuthContext';
 
 // const API_URL = `http://192.168.0.239:3000`;
-const API_URL = `http://10.81.46.69:3000`;
+// const API_URL = `http://10.81.46.69:3000`;
+
+const API_URL = `http://10.81.46.198:3000`;
 
 export default function LoginScreen({ navigation }) {
+    // Contexto de autenticação
+    const { login } = useAuth();
+
+    // Estados para armazenar o e-mail, senha e estado de carregamento
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -34,6 +41,8 @@ export default function LoginScreen({ navigation }) {
             const data = await response.json();
 
             if (response.ok && data.sucesso) {
+                await login(data.user);
+
                 navigation.reset({
                     index: 0,
                     routes: [{ name: 'MainApp' }]

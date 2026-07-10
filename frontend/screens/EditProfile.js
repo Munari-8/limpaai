@@ -39,12 +39,6 @@ export default function EditProfile() {
     return (
         <ScreenWrapper>
             <View style={styles.container}>
-                <View style={styles.top}>
-                    <LogoTitle
-                        text={`Editar perfil`}
-                    />
-                </View>
-
                 <View style={styles.main}>
                     <Avatar
                         source={profileImg}
@@ -82,19 +76,19 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: `center`,
-        justifyContent: `center`,
+        justifyContent: `flex-start`,
 
-        paddingVertical: `5%`
+        paddingVertical: `5%`,
     },
     top: {
         width: '100%' ,
         alignItems: 'center',
-        paddingTop: '15%',
+        marginBottom: '8%'
     },
     main: {
         width: '100%',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         marginBottom: '5%'
     },
 
@@ -105,6 +99,6 @@ const styles = StyleSheet.create({
         color: Colors.greenLA2,
 
         marginBottom: 4,
-        marginTop: 6
+        marginTop: 6,
     }
 })
