@@ -194,6 +194,11 @@ export default function App() {
           component={CatalogoDeResiduos}
           options={{ headerShown: false }}
         />
+
+        <Stack.Screen
+          name='EditProfile'
+          component={EditProfile}
+        />
       </Stack.Navigator>
     </NavigationContainer>
     );

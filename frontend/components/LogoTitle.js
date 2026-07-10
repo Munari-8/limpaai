@@ -7,6 +7,8 @@ import { Image } from 'expo-image';
 import { Colors, Fonts } from './Theme';
 
 export default function LogoTitle({ text }) {
+    const txt = text.toUpperCase();
+
     return (
         <View style={styles.logo}>
             <Image
@@ -15,7 +17,7 @@ export default function LogoTitle({ text }) {
                 contentFit='contain'
             />
             
-            <Text style={styles.text}>{text}</Text>
+            <Text style={styles.text}>{txt}</Text>
         </View>
     )
 }

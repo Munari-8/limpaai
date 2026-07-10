@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
 
 // Componentes locais
 import Button from '../../components/Button';
@@ -8,12 +8,52 @@ import LogoTitle from '../../components/LogoTitle';
 import FormInput from '../../components/FormInput';
 import ScreenWrapper from '../../components/ScreenWrapper';
 
+// const API_URL = `http://192.168.0.239:3000`;
+const API_URL = `http://10.81.46.69:3000`;
+
 export default function LoginScreen({ navigation }) {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleLogin = async () => {
+        setLoading(true);
+
+        try {
+            const response = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    senha: password
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.sucesso) {
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'MainApp' }]
+                });
+            } else {
+                Alert.alert(`Falha no login`, data.mensagem || `E-mail ou senha incorretos`);
+            }
+        } catch (error) {
+            console.log(error);
+            Alert.alert(`Erro de conexão`, `Não foi possível se comunicar com a API do servidor`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <ScreenWrapper>
             <View style={styles.innerContainer}>
                 <View style={styles.top}>
-                    <LogoTitle text={'ENTRAR'}/>
+                    <LogoTitle text={'entrar'}/>
                 </View>
 
                 <View style={styles.bottom}>
@@ -22,23 +62,25 @@ export default function LoginScreen({ navigation }) {
                         placeholder={'Digite seu e-mail'}
                         keyboardType='email-address'
                         autoCapitalize='none'
+                        value={email}
+                        setValue={setEmail}
                     />
 
                     <Text style={styles.text1}>Senha</Text>
                     <FormInput
                         placeholder={'Digite sua senha'}
                         secureTextEntry={true}
+                        value={password}
+                        setValue={setPassword}
                     />
                         
                     <View style={{marginTop: '9%'}}></View>
 
                     <Button
-                        text={'Entrar'}
+                        text={loading ? `Carregando...` : `Entrar`}
                         color={Colors.greenLA1}
-                        onPress={() => navigation.reset({
-                            index: 0,
-                            routes: [{ name: 'MainApp' }]
-                        })}
+                        onPress={handleLogin}
+                        disabled={loading}
                     />
                             
                     <TouchableOpacity onPress={() => navigation.navigate('PasswordRecoveryEmail')}>

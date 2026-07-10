@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
 
 // Expo
-import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from "expo-image";
 
 // Componentes locais
@@ -11,9 +10,11 @@ import ScreenWrapper from '../components/ScreenWrapper';
 import Button from '../components/Button'
 import ToggleList from "../components/ToggleList";
 import TaskBox from "../components/Serviços/TaskBox";
+import EditProfile from "./EditProfile";
+import Avatar from "../components/Avatar";
 
 export default function HomeScreen({ navigation }) {
-    const username = 'Usuário' // Vai ser recebido como 'name' no futuro
+    const username = 'usuário' // Vai ser recebido como 'name' no futuro
 
     const showDateTag = true
 
@@ -26,12 +27,8 @@ export default function HomeScreen({ navigation }) {
         <ScreenWrapper>
             <View style={styles.innerContainer}>
                 <View style={styles.main}>
-                    <Image
-                        source={''}
-                        placeholder={require('../assets/person/personGreen.svg')}
-                        style={styles.avatar}
-                        contentFit='contain'
-                        placeholderContentFit="cover"
+                    <Avatar
+                        //tem q bota a source aq dps
                     />
                     <Text style={styles.text2}>BEM-VINDO(A),</Text>
                     <Text style={styles.textUsername}>{usernameTitle}</Text>
@@ -46,6 +43,7 @@ export default function HomeScreen({ navigation }) {
                     <Button
                         text={'Editar perfil'}
                         color={Colors.greenLA1}
+                        onPress={() => navigation.navigate(`EditProfile`)}
                     />
                 </View>
                 
@@ -138,6 +136,7 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.condensedBlack,
         fontSize: 44,
 
+        textAlign: `center`,
         marginVertical: '-2%'
     },
     serviceCounterText: {
@@ -152,7 +151,9 @@ const styles = StyleSheet.create({
     text2: {
         color: Colors.greenLA2,
         fontFamily: Fonts.bold,
-        fontSize: 16
+        fontSize: 16,
+
+        marginTop: `2%`
     },
 
     // Outro
@@ -166,13 +167,5 @@ const styles = StyleSheet.create({
         paddingVertical: '1.5%',
         paddingHorizontal: '3%',
         marginVertical: '2%'
-    },
-    avatar: {
-        width: 180,
-        height: 180,
-        borderRadius: 100,
-        backgroundColor: Colors.greenLA0,
-
-        marginBottom: '5%'
     }
 })

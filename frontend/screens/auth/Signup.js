@@ -1,5 +1,5 @@
 import React, { use, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import * as Yup from 'yup';
@@ -11,24 +11,23 @@ import LogoTitle from '../../components/LogoTitle';
 import FormInput from '../../components/FormInput';
 import ScreenWrapper from '../../components/ScreenWrapper';
 
+// const API_URL = `http://192.168.0.239:3000`;
+const API_URL = `http://10.81.46.69:3000`;
+
 const signupSchema = Yup.object().shape({
     name: Yup.string()
         .required('Nome completo é obrigatório'),
-        
     email: Yup.string()
         .email('E-mail inválido')
         .required('E-mail é obrigatório'),
-
     birthDate: Yup.date()
         .transform((value, originalValue) => originalValue === '' ? null : value)
         .nullable()
         .max(new Date(), 'Data de nascimento inválida')
         .required('Data de nascimento é obrigatória'),
-
     password: Yup.string()
         .min(8, 'Sua senha precisa conter no mínimo 8 digitos')
         .required('Senha é obrigatória'),
-                
     confirmPassword: Yup.string()
         .oneOf([Yup.ref('password'), null], 'As senhas não coincidem')
         .required('Confirmação de senha é obrigatória')
@@ -43,11 +42,27 @@ export default function SignUpScreen({ navigation }) {
         confirmPassword: ''
     });
 
+    const [formErrors, setFormErrors] = useState({});
+
     const handleInputChange = (field, value) => {
         setFormData({
             ...formData,
             [field]: value
         });
+    };
+
+    // Formata a data pra ser compátível com MySQL
+    const formatDateForMySQL = (date) => {
+        if (!date) return null;
+        const d = new Date(date);
+        let month = '' + (d.getMonth() + 1);
+        let day = '' + d.getDate();
+        const year = d.getFullYear();
+
+        if (month.length < 2) month = `0` + month;
+        if (day.length < 2) day = `0` + day;
+
+        return [year, month, day].join(`-`);
     };
 
     // Calendário
@@ -63,18 +78,36 @@ export default function SignUpScreen({ navigation }) {
 
     const formattedData = formData.birthDate ? formData.birthDate.toLocaleDateString('pt-BR') : '';
 
-    // Validação dos inputs do formulário
-    const [formErrors, setFormErrors] = useState({});
-    
     const handleSignUp = async() => {
         try {
             setFormErrors({});
 
             await signupSchema.validate(formData, { abortEarly: false });
-            navigation.reset({
-                index: 0,
-                routes: [{ name: 'MainApp' }]
+            
+            const payload = {
+                nome: formData.name,
+                email: formData.email,
+                senha: formData.password,
+                data_nascimento: formatDateForMySQL(formData.birthDate),
+                tipo_usuario: `comum`
+            };
+
+            const response = await fetch(`${API_URL}/usuarios`, {
+                method: `POST`,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
             });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                Alert.alert(`Sucesso!`, `Sua conta foi criada com sucesso`);
+                navigation.navigate('Welcome');
+            } else {
+                Alert.alert(`Erro no cadastro`, data.mensagem || `Houve um erro`);
+            }
         } catch (error) {
             if (error instanceof Yup.ValidationError) {
                 const errors = {};
@@ -83,6 +116,9 @@ export default function SignUpScreen({ navigation }) {
                     errors[err.path] = err.message;
                 });
                 setFormErrors(errors);
+            } else {
+                console.log(error);
+                Alert.alert(`Erro de conexão`, `Não foi possível contatar o servidor`);
             }
         }
     };
