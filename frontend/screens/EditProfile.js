@@ -11,9 +11,33 @@ import ScreenWrapper from "../components/ScreenWrapper";
 import LogoTitle from "../components/LogoTitle";
 import Avatar from "../components/Avatar";
 import FormInput from "../components/FormInput";
+import FormSelect from '../components/FormSelect';
+
+const RS_DATA = {
+    'Novo Hamburgo': [
+        'Alpes do Vale', 'Boa Saúde', 'Boa Vista', 'Canudos', 'Centro', 'Diehl', 'Guarani', 'Hamburgo Velho',
+        'Ideal', 'Industrial', 'Liberdade', 'Lomba Grande', 'Mauá', 'Operário', 'Ouro Branco', 'Pátria Nova',
+        'Petrópolis', 'Primavera', 'Rincão', 'Rio Branco', 'Rondônia', 'Roselândia', 'São Jorge', 'Santo Afonso',
+        'São José', 'Vila Nova', 'Vila Rosa'
+    ],
+    'São Leopoldo': [
+        'Arroio da Manteiga', 'Boa Vista', 'Campestre', 'Campina', 'Centro', 'Cristo Rei', 'Duque de Caxias', 'Fazenda São Borja',
+        'Feitoria', 'Fião', 'Jardim América', 'Morro do Espelho', 'Padre Reus', 'Pinheiro', 'Rio Branco', 'Rio dos Sinos',
+        'Santa Teresa', 'Santo André', 'Santos Dumont', 'São João Batista', 'São José', 'São Miguel', 'Scharlau', 'Vicentina'
+    ]
+};
 
 export default function EditProfile() {
     const [profileImg, setProfileImg] = useState(null);
+
+    // Pronomes
+    const [pronoun, setPronoun] = useState();
+
+    const pronounList = [
+        `Ele/Dele`,
+        `Ela/Dela`,
+        `Elu/Delu`
+    ]
 
     // Escolher imagem da galeria
     const handlePickImg = async () => {
@@ -36,6 +60,17 @@ export default function EditProfile() {
         }
     };
 
+    const [city, setCity] = useState(null);
+    const [neighborhood, setNeighborhood] = useState(null);
+
+    const cityOptions = Object.keys(RS_DATA);
+    const neighborhoodOptions = city ? RS_DATA[city] : [];
+
+    const handleCityChange = (selectedCity) => {
+        setCity(selectedCity);
+        setNeighborhood(null);
+    };
+
     return (
         <ScreenWrapper>
             <View style={styles.container}>
@@ -55,16 +90,37 @@ export default function EditProfile() {
                         placeholder={`Digite seu nome completo`}
                     />
 
-                    <Text style={styles.text1}>Nome de usuário</Text>
-                    <FormInput
-                        placeholder={`Digite um nome de usuário válido`}
+                    <Text style={styles.text1}>Pronomes</Text>
+                        <FormSelect
+                            placeholder={`Selecione seus pronomes`}
+                            options={pronounList}
+                            selectedValue={pronoun}
+                            onSelect={setPronoun}
+                            isWaste={false}
+                            width={80}
+                            zIndex={3}
+                        />
+
+                    <Text style={styles.text1}>Cidade</Text>
+                    <FormSelect
+                        placeholder={`Selecione sua cidade`}
+                        options={cityOptions}
+                        selectedValue={city}
+                        onSelect={handleCityChange}
+                        isWaste={false}
+                        width={80}
+                        zIndex={2}
                     />
 
-                    <Text style={styles.text1}>Data de nascimento</Text>
-                    <FormInput
-                        placeholder={`Selecione sua data de nascimento`}
+                    <Text style={styles.text1}>Bairro</Text>
+                    <FormSelect
+                        placeholder={city ? `Selecione seu bairro` : `Selecione a cidade primeiro`}
+                        options={neighborhoodOptions}
+                        selectedValue={neighborhood}
+                        onSelect={(item) => setNeighborhood(item)}
+                        isWaste={false}
+                        width={80}
                     />
-
                 </View>
             </View>
         </ScreenWrapper>

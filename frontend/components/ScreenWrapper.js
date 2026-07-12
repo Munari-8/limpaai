@@ -3,7 +3,7 @@ import {
     StyleSheet,
     KeyboardAvoidingView,
     ScrollView,
-    TouchableWithoutFeedback,
+    Pressable,
     Keyboard,
     Platform 
 } from "react-native";
@@ -20,11 +20,15 @@ export default function ScreenWrapper({ children }) {
             <ScrollView
                 contentContainerStyle={styles.scrollContainer}
                 keyboardShouldPersistTaps='handled'
+                keyboardDismissMode="on-drag"
                 bounces={false}
             >
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <Pressable
+                    onPress={Keyboard.dismiss}
+                    style={styles.presssableArea}
+                >
                     {children}
-                </TouchableWithoutFeedback>
+                </Pressable>
             </ScrollView>
         </KeyboardAvoidingView>
     );
@@ -37,5 +41,9 @@ const styles = StyleSheet.create({
     },
     scrollContainer: {
         flexGrow: 1
+    },
+    presssableArea: {
+        flex: 1,
+        width: `100%`
     }
 });

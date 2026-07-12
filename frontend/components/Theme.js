@@ -13,7 +13,7 @@ export const Colors = {
 
     // Background
     background: '#ffffff',
-    formInputBg: '#00000010',
+    formInputBg: '#EFEFEF',
 
     black: 'black',
     b10: '#00000020',
