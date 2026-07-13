@@ -27,7 +27,7 @@ export default function Avatar({ source, size = 180, onPress }) {
                 >
                     <MaterialCommunityIcons
                         name='pencil'
-                        size={size * 0.18}
+                        size={size * 0.25}
                         color={Colors.white}
                     />
                 </TouchableOpacity>
@@ -50,12 +50,10 @@ const styles = StyleSheet.create({
     },
     edit: {
         position: `absolute`,
-        bottom: 4,
-        right: 4,
 
-        backgroundColor: Colors.b50,
+        backgroundColor: Colors.b25,
         borderRadius: 999,
-        padding: 8,
+        padding: `37.5%`,
         
         justifyContent: `center`,
         alignItems: `center`

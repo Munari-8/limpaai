@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, View, Alert, Text } from "react-native";
 
 // Expo
@@ -12,6 +12,13 @@ import LogoTitle from "../components/LogoTitle";
 import Avatar from "../components/Avatar";
 import FormInput from "../components/FormInput";
 import FormSelect from '../components/FormSelect';
+import Button from '../components/Button';
+import { useAuth } from "../contexts/AuthContext";
+
+// const API_URL = `http://192.168.0.239:3000`;
+const API_URL = `http://10.81.46.69:3000`;
+
+// const API_URL = `http://10.81.46.198:3000`;
 
 const RS_DATA = {
     'Novo Hamburgo': [
@@ -28,16 +35,102 @@ const RS_DATA = {
 };
 
 export default function EditProfile() {
+    const { user, updateUserContext } = useAuth();
+    const userId = user?.id;
+
     const [profileImg, setProfileImg] = useState(null);
+    const [nomeExibicao, setNomeExibicao] = useState('');
+    const [nomeCompleto, setNomeCompleto] = useState('');
+    const [gender, setGender] = useState();
+     const [city, setCity] = useState(null);
+    const [neighborhood, setNeighborhood] = useState(null);
 
-    // Pronomes
-    const [pronoun, setPronoun] = useState();
+    const genderList = [
+        `Masculino`,
+        `Feminino`,
+        `Não Binário`
+    ];
+    const cityOptions = Object.keys(RS_DATA);
+    const neighborhoodOptions = city ? RS_DATA[city] : [];
 
-    const pronounList = [
-        `Ele/Dele`,
-        `Ela/Dela`,
-        `Elu/Delu`
-    ]
+    // Buscar os dados assim que a tela abre
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (!userId) return;
+
+            try {
+                const response = await fetch(`${API_URL}/usuarios/${userId}`)
+                const data = await response.json();
+
+                if (response.ok) {
+                    setNomeExibicao(data.nome_exibicao || '');
+                    setNomeCompleto(data.nome || '');
+                    setGender(data.genero || null);
+                    setCity(data.cidade || null);
+                    setNeighborhood(data.bairro || null);
+
+                    if (data.foto_perfil) {
+                        setProfileImg(`${API_URL}${data.foto_perfil}`);
+                    }
+                }
+            } catch (error) {
+                console.log(error);
+                Alert.alert(`Erro`, `Não foi possível carregar seus dados`);
+            }
+        };
+
+        fetchUserData();
+    }, [userId]);
+
+    // Enviar dados pro banco
+    const handleSave = async () => {
+        try {
+            const formData = new FormData();
+
+            formData.append('nome', nomeCompleto || '');
+            formData.append('nome_exibicao', nomeExibicao || '');
+            formData.append('genero', gender || '');
+            formData.append('cidade', city || '');
+            formData.append('bairro', neighborhood || '');
+
+            if (profileImg && profileImg.startsWith('file://')) {
+                const filename = profileImg.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+                formData.append('foto_perfil', {
+                    uri: profileImg,
+                    name: filename,
+                    type,
+                });
+            } else {
+                const relativePath = profileImg ? profileImg.replace(API_URL, '') : '';
+                formData.append('foto_perfil_atual', relativePath);
+            }
+
+            const response = await fetch(`${API_URL}/usuarios/${userId}`, {
+                method: `PUT`,
+                body: formData
+            });
+
+            if (response.ok) {
+                const userResponse = await fetch(`${API_URL}/usuarios/${userId}`);
+                const updatedData = await userResponse.json();
+
+                await updateUserContext({
+                    nome: updatedData.nome,
+                    nome_exibicao: updatedData.nome_exibicao,
+                    genero: updatedData.genero,
+                    foto_perfil: updatedData.foto_perfil
+                });
+            } else {
+                Alert.alert(`Erro`, `Falha ao salvar alterações`);
+            }
+        } catch (error) {
+            console.log(error);
+            Alert.alert(`Erro`, `Falha de conexão com o servidor`);
+        }
+    };
 
     // Escolher imagem da galeria
     const handlePickImg = async () => {
@@ -60,12 +153,6 @@ export default function EditProfile() {
         }
     };
 
-    const [city, setCity] = useState(null);
-    const [neighborhood, setNeighborhood] = useState(null);
-
-    const cityOptions = Object.keys(RS_DATA);
-    const neighborhoodOptions = city ? RS_DATA[city] : [];
-
     const handleCityChange = (selectedCity) => {
         setCity(selectedCity);
         setNeighborhood(null);
@@ -82,24 +169,27 @@ export default function EditProfile() {
 
                     <Text style={styles.text1}>Nome de exibição</Text>
                     <FormInput
-                        placeholder={`Digite um nome à ser exibido aos outros`}
+                        placeholder={`Digite um nome à ser exibido`}
+                        value={nomeExibicao}
+                        setValue={setNomeExibicao}
                     />
 
                     <Text style={styles.text1}>Nome completo</Text>
                     <FormInput
                         placeholder={`Digite seu nome completo`}
+                        value={nomeCompleto}
+                        setValue={setNomeCompleto}
                     />
 
-                    <Text style={styles.text1}>Pronomes</Text>
-                        <FormSelect
-                            placeholder={`Selecione seus pronomes`}
-                            options={pronounList}
-                            selectedValue={pronoun}
-                            onSelect={setPronoun}
-                            isWaste={false}
-                            width={80}
-                            zIndex={3}
-                        />
+                    <Text style={styles.text1}>Gênero</Text>
+                    <FormSelect
+                        placeholder={`Selecione seu gênero`}
+                        options={genderList}
+                        selectedValue={gender}
+                        onSelect={setGender}
+                        width={80}
+                        zIndex={3}
+                    />
 
                     <Text style={styles.text1}>Cidade</Text>
                     <FormSelect
@@ -107,7 +197,6 @@ export default function EditProfile() {
                         options={cityOptions}
                         selectedValue={city}
                         onSelect={handleCityChange}
-                        isWaste={false}
                         width={80}
                         zIndex={2}
                     />
@@ -117,11 +206,17 @@ export default function EditProfile() {
                         placeholder={city ? `Selecione seu bairro` : `Selecione a cidade primeiro`}
                         options={neighborhoodOptions}
                         selectedValue={neighborhood}
-                        onSelect={(item) => setNeighborhood(item)}
-                        isWaste={false}
+                        onSelect={setNeighborhood}
                         width={80}
                     />
                 </View>
+
+                <Button
+                        text={`Salvar Mudanças`}
+                        color={Colors.greenLA1}
+                        style={{ marginTop: `28%` }}
+                        onPress={handleSave}
+                    />
             </View>
         </ScreenWrapper>
     );

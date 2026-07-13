@@ -14,13 +14,40 @@ import EditProfile from "./EditProfile";
 import Avatar from "../components/Avatar";
 import { useAuth } from "../contexts/AuthContext";
 
+// const API_URL = `http://192.168.0.239:3000`;
+const API_URL = `http://10.81.46.69:3000`;
+
+// const API_URL = `http://10.81.46.198:3000`;
+
 export default function HomeScreen({ navigation }) {
     const { user } = useAuth();
 
-    const username = user?.nome_exibicao || (user?.nome ? user.nome.trim().split(/\s+/)[0] : 'USUÁRIO');
+    // Configuração da exibição do nome 
+    const username = user?.nome_exibicao || (user?.nome ? user.nome.trim().split(/\s+/)[0] : 'usuário');
     const usernameTitle = username.toUpperCase();
 
-    const showDateTag = true
+    // Foto de perfil
+    const profileImgSrc = user?.foto_perfil ? `${API_URL}${user.foto_perfil}` : null;
+
+    // Configuração do "Bem-Vindo"
+    let welcome;
+
+    switch (user?.genero) {
+        case 'Masculino':
+            welcome = 'BEM-VINDO,';
+            break;
+        case 'Feminino':
+            welcome = 'BEM-VINDA,';
+            break;
+        case 'Não Binário':
+            welcome = 'BEM-VINDE,';
+            break;
+        default:
+            'BEM-VINDO(A),';
+            break;
+    }
+
+    const showDateTag = true // Trocar pra verificar em q página ele tá
     
     const [isOpen, setIsOpen] = useState(true);
         
@@ -29,9 +56,9 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.innerContainer}>
                 <View style={styles.main}>
                     <Avatar
-                        //tem q bota a source aq dps
+                        source={profileImgSrc}
                     />
-                    <Text style={styles.text2}>BEM-VINDO(A),</Text>
+                    <Text style={styles.text2}>{welcome}</Text>
                     <Text style={styles.textUsername}>{usernameTitle}</Text>
 
                     <Text style={styles.text1}>

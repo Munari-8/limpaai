@@ -3,7 +3,7 @@ import { StyleSheet, TouchableOpacity, Text } from 'react-native'
 // Componentes locais
 import { Colors, Fonts } from './Theme'
 
-export default function Button({ text, color = Colors.black, flex = false, onPress }) {
+export default function Button({ text, color = Colors.black, flex = false, onPress, style }) {
     let flexB = ''
     let width = '80%'
 
@@ -13,7 +13,7 @@ export default function Button({ text, color = Colors.black, flex = false, onPre
     }
 
     return (
-        <TouchableOpacity style={styles.button(color, flexB, width)} onPress={onPress}>
+        <TouchableOpacity style={[styles.button(color, flexB, width), style]} onPress={onPress}>
             <Text style={styles.text}>{text}</Text>
         </TouchableOpacity>
     )
