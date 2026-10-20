@@ -1,17 +1,17 @@
 import React from "react";
 import {
-    StyleSheet,
-    KeyboardAvoidingView,
-    ScrollView,
-    Pressable,
-    Keyboard,
-    Platform 
+    StyleSheet, KeyboardAvoidingView, ScrollView, Pressable, Keyboard, Platform, View
 } from "react-native";
 
 // Componentes locais
 import { Colors } from "./Theme";
 
 export default function ScreenWrapper({ children }) {
+    const WrapperComponent = Platform.OS === 'web' ? View : Pressable;
+    const wrapperProps = Platform.OS === 'web'
+        ? { style: styles.presssableArea }
+        : { onPress: Keyboard.dismiss, style: styles.presssableArea };
+
     return (
         <KeyboardAvoidingView
             style={styles.container}
@@ -23,12 +23,9 @@ export default function ScreenWrapper({ children }) {
                 keyboardDismissMode="on-drag"
                 bounces={false}
             >
-                <Pressable
-                    onPress={Keyboard.dismiss}
-                    style={styles.presssableArea}
-                >
+                <WrapperComponent {...wrapperProps}> 
                     {children}
-                </Pressable>
+                </WrapperComponent>
             </ScrollView>
         </KeyboardAvoidingView>
     );

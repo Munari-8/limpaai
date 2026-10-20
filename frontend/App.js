@@ -170,7 +170,11 @@ export default function App() {
             }
           }}
         >
-          <Stack.Screen name='Welcome' component={WelcomeScreen}/>
+          <Stack.Screen
+            name='Welcome'
+            component={WelcomeScreen}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen name='SignUp' component={SignUpScreen}/>
           <Stack.Screen name='Login' component={LoginScreen}/>
 

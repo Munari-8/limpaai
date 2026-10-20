@@ -1,5 +1,5 @@
 import React, { use, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Alert, useWindowDimensions, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import * as Yup from 'yup';
@@ -11,8 +11,8 @@ import LogoTitle from '../../components/LogoTitle';
 import FormInput from '../../components/FormInput';
 import ScreenWrapper from '../../components/ScreenWrapper';
 
-// const API_URL = `http://192.168.0.239:3000`;
-const API_URL = `http://10.81.46.69:3000`;
+const API_URL = `http://192.168.0.239:3000`;
+// const API_URL = `http://10.81.46.69:3000`;
 
 // const API_URL = `http://10.81.46.198:3000`;
 
@@ -36,6 +36,15 @@ const signupSchema = Yup.object().shape({
 });
 
 export default function SignUpScreen({ navigation }) {
+    const { width } = useWindowDimensions();
+    const isDesktop = width >= 768;
+
+    const getWidth = () => {
+        if (width > 1024) return '38%'; // Big desktop
+        if (width > 768) return '56%';  // Tablet or small desktop
+        return '75.5%';                   // Cell phone
+    };
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -47,10 +56,10 @@ export default function SignUpScreen({ navigation }) {
     const [formErrors, setFormErrors] = useState({});
 
     const handleInputChange = (field, value) => {
-        setFormData({
-            ...formData,
+        setFormData( prev => ({
+            ...prev,
             [field]: value
-        });
+        }));
     };
 
     // Formata a data pra ser compátível com MySQL
@@ -72,13 +81,29 @@ export default function SignUpScreen({ navigation }) {
 
     const onChangeDate = (event, selectedDate) => {
         setShowPicker(false);
-
         if (selectedDate) {
             handleInputChange('birthDate', selectedDate);
         }
     };
 
-    const formattedData = formData.birthDate ? formData.birthDate.toLocaleDateString('pt-BR') : '';
+    const handleWebDateChange = (e) => {
+        const val = e.target.value;
+        if (val) {
+            const [year, month, day] = val.split('-');
+            const dateObj = new Date(year, month - 1, day);
+            handleInputChange('birthDate', dateObj);
+        } else {
+            handleInputChange('birthDate', '');
+        }
+    };
+
+    const formattedData = formData.birthDate && formData.birthDate instanceof Date
+        ? formData.birthDate.toLocaleDateString('pt-BR')
+        : '';
+
+    const webDateValue = formData.birthDate && formData.birthDate instanceof Date
+        ? formatDateForMySQL(formData.birthDate)
+        : '';
 
     const handleSignUp = async() => {
         try {
@@ -113,7 +138,6 @@ export default function SignUpScreen({ navigation }) {
         } catch (error) {
             if (error instanceof Yup.ValidationError) {
                 const errors = {};
-
                 error.inner.forEach(err => {
                     errors[err.path] = err.message;
                 });
@@ -125,10 +149,15 @@ export default function SignUpScreen({ navigation }) {
         }
     };
 
+    const formWidth = getWidth();
+
     return (
         <ScreenWrapper>
             <View style={styles.innerContainer}>
-                <View style={styles.top}>
+                <View style={[
+                    styles.top,
+                    {paddingTop: isDesktop ? 0 : '15%'}
+                ]}>
                     <LogoTitle text='CRIAR CONTA'/>
                 </View>
 
@@ -152,30 +181,59 @@ export default function SignUpScreen({ navigation }) {
                     />
 
                     <Text style={styles.text1}>Data de nascimento</Text>
-                    <TouchableOpacity
-                        onPress={() => setShowPicker(true)}
-                        style={{ width: '100%', alignItems: 'center' }}
-                        activeOpacity={0.7}
-                    >
-                        <View pointerEvents='none' style={{ width: '100%', alignItems: 'center' }}>
-                            <FormInput
-                                placeholder={'Selecione sua data de nascimento'}
-                                value={formattedData}
-                                setValue={() => {}}
-                                editable={false}
-                                error={formErrors.birthDate}
+                    {Platform.OS === 'web' ? (
+                        // Web
+                        <View style={{ width: '100%', alignItems: 'center' }}>
+                            <input
+                                type='date'
+                                value={webDateValue}
+                                onChange={handleWebDateChange}
+                                max={new Date().toISOString().split('T')[0]}
+                                style={{
+                                    backgroundColor: Colors.formInputBg,
+                                    padding: '8px 16px',
+                                    width: formWidth,
+                                    borderRadius: '100px',
+                                    border: 'none',
+                                    outline: 'none',
+                                    fontFamily: 'sans-serif',
+                                    fontSize: '14px',
+                                    color: '#333'
+                                }}
                             />
+                            {formErrors.birthDate && (
+                                <Text style={styles.errorText}>{formErrors.birthDate}</Text>
+                            )}
                         </View>
-                    </TouchableOpacity>
+                    ) : (
+                        // iOS / Android
+                        <>
+                            <TouchableOpacity
+                                onPress={() => setShowPicker(true)}
+                                style={{ width: '100%', alignItems: 'center' }}
+                                activeOpacity={0.7}
+                            >
+                                <View pointerEvents='none' style={{ width: '100%', alignItems: 'center' }}>
+                                    <FormInput
+                                        placeholder={'Selecione sua data de nascimento'}
+                                        value={formattedData}
+                                        setValue={() => {}}
+                                        editable={false}
+                                        error={formErrors.birthDate}
+                                    />
+                                </View>
+                            </TouchableOpacity>
 
-                    {showPicker && (
-                        <DateTimePicker
-                            value={formData.birthDate || new Date()}
-                            mode='date'
-                            display='default'
-                            onChange={onChangeDate}
-                            maximumDate={new Date()}
-                        />
+                            {showPicker && (
+                                <DateTimePicker
+                                    value={formData.birthDate || new Date()}
+                                    mode='date'
+                                    display='default'
+                                    onChange={onChangeDate}
+                                    maximumDate={new Date()}
+                                />
+                            )}  
+                        </>
                     )}
 
                     <Text style={styles.text1}>Senha</Text>
@@ -196,7 +254,7 @@ export default function SignUpScreen({ navigation }) {
                         error={formErrors.confirmPassword}
                     />
 
-                    <View style={{marginTop: '9%'}}></View>
+                    <View style={{marginTop: '8%'}}></View>
                     
                     <Button
                         text='Criar conta'
@@ -206,7 +264,12 @@ export default function SignUpScreen({ navigation }) {
                 </View>
 
                 <View style={styles.footer}>
-                    <Text style={[styles.text2, {fontSize: 15}]}>Combatendo a poluição urbana com a união entre as pessoas</Text>
+                    <Text style={[
+                        styles.text2,
+                        {fontSize: 15}
+                    ]}>
+                        Combatendo a poluição urbana com a união entre as pessoas
+                    </Text>
                 </View>
             </View>
         </ScreenWrapper>
@@ -219,9 +282,7 @@ const styles = StyleSheet.create({
         flex: 1,
 
         justifyContent: 'space-between',
-        alignItems: 'center',
-
-        paddingVertical: '5%'
+        alignItems: 'center'
     },
     top: {
         width: '100%' ,
@@ -259,5 +320,10 @@ const styles = StyleSheet.create({
 
         marginBottom: 8,
         marginTop: 16
+    },
+    errorText: {
+        color: 'red',
+        fontFamily: Fonts.light,
+        marginTop: 4
     }
 });

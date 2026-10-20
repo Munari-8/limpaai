@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { Image } from 'expo-image';
 
@@ -8,14 +8,23 @@ import Button from '../../components/Button';
 import { Colors, Fonts } from '../../components/Theme';
 
 export default function WelcomeScreen({ navigation }){
+    const { width } = useWindowDimensions();
+    const isDesktop = width >= 768;
+
     return (
         <View style={styles.container}>
             <View style={styles.top}>
-                <Text style={styles.text1}>BEM-VINDO(A) AO</Text>
+                <Text style={[
+                    styles.text1,
+                    { paddingTop: isDesktop ? '10%' : '25%' }
+                ]}>BEM-VINDO(A) AO</Text>
 
                 <Image
                     source={require('../../assets/limpaai-logo.svg')}
-                    style={styles.logo}
+                    style={[
+                        styles.logo,
+                        { height: isDesktop ? 175 : 125}
+                    ]}
                     contentFit='contain'
                 />
             </View>
@@ -49,16 +58,11 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.background,
 
         alignItems: 'center',
-        justifyContent: 'flex-start',
-
-        paddingTop: '5%',
-        paddingBottom: '5%'
+        justifyContent: 'flex-start'
     },
     top: {
         width: '100%' ,
-        alignItems: 'center',
-
-        paddingTop: '20%',
+        alignItems: 'center'
     },
     bottom: {
         width: '100%',

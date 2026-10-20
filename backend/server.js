@@ -44,7 +44,7 @@ app.post('/usuarios', async (req, res) => {
     const sql = `
         INSERT INTO USUARIO
         ( id_categoria, nome, email, senha, data_nascimento, tipo_usuario, cidade, bairro, foto_perfil, genero, username, nome_exibicao )
-        VALUES ( 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
+        VALUES (    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
     `;
 
     try {
