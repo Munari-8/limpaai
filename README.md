@@ -1,7 +1,9 @@
 # Guia de Instalação
 
 #### 1. Clone o repositório na sua máquina com:
-`git clone https://github.com/Munari-8/limpaai.git`
+```
+git clone https://github.com/Munari-8/limpaai.git
+```
 
 #### 2. Crie e prepare o banco de dados via MySQL Workbench colando o seguinte código e executando-o:
 
@@ -101,16 +103,16 @@ INSERT INTO CATEGORIA_USUARIO (nome_categoria) VALUES ('Comum');
 EXPO_PUBLIC_API_URL=SEU_IP:3000
 ```
 
-Como descobrir seu IP via CLI (terminal):  
-Windows: `ipconfig`  
-macOS: `ipconfig getifaddr en0`  
-Linux: `ip a`
+- Como descobrir seu IP via CLI (terminal):  
+    - Windows: `ipconfig`  
+    - macOS: `ipconfig getifaddr en0`  
+    - Linux: `ip a`
 
 
 #### 4. Dentro da pasta ./backend, acesse o arquivo "dbconfig.js" e configure a variável `connection`:
-3.1. Caso esteja em um notebook ou desktop da escola, apenas comente as linhas de 3 à 8 e retire as barras da frente das linhas de 10 à 15. Caso ocorra algum erro, apague `root` de `password` e deixe-o vazio.  
+- Caso esteja em um notebook ou desktop da escola, apenas comente as linhas de 3 à 8 e retire as barras da frente das linhas de 10 à 15. Caso ocorra algum erro, apague `root` de `password` e deixe-o vazio.  
 
-3.2 Caso esteja em uma máquina própria, comente as linhas de 3 à 8, retire as barras da frente das linhas de 10 à 15 e troque os valores de `user` e `password` pelos configurados na máquina atual.
+- Caso esteja em uma máquina própria, comente as linhas de 3 à 8, retire as barras da frente das linhas de 10 à 15 e troque os valores de `user` e `password` pelos configurados na máquina atual.
 
 
 #### 5. Abra o terminal (bash) na pasta ./frontend e rode o comando `npm install expo@57`
