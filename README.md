@@ -1,7 +1,7 @@
 # CONFIGURAÇÕES PARA ANTES DE INICIAR O PROJETO
 
 
-## 1. Crie e prepare o banco de dados via MySQL Workbench colando o seguinte código e executando-o:
+### 1. Crie e prepare o banco de dados via MySQL Workbench colando o seguinte código e executando-o:
 
 ```
 CREATE DATABASE limpaai;
@@ -94,29 +94,30 @@ INSERT INTO CATEGORIA_USUARIO (nome_categoria) VALUES ('Comum');
 ```
 
 
-## 2. Dentro da pasta ./frontend, crie um arquivo chamado ".env" e insira nele o seguinte código, substituindo "SEU_IP" pelo atual IP da máquina (garanta que tanto seu dispositivo móvel quanto sua máquina estejam conectadas na mesma rede wifi):
+#### 2. Dentro da pasta ./frontend, crie um arquivo chamado ".env" e insira nele o seguinte código, substituindo `SEU_IP` pelo atual IP da máquina (garanta que tanto seu dispositivo móvel quanto sua máquina estejam conectadas na mesma rede wifi):
 
+```
 EXPO_PUBLIC_API_URL=SEU_IP:3000
+```
 
-Como descobrir seu IP via CLI (terminal):
-Windows: ipconfig
-macOS: ipconfig getifaddr en0
+Como descobrir seu IP via CLI (terminal):  
+Windows: ipconfig  
+macOS: ipconfig getifaddr en0  
 Linux: ip a
 
 
-## 3. Dentro da pasta ./backend, acesse o arquivo "dbconfig.js" e configure a variável "connection".
+#### 3. Dentro da pasta ./backend, acesse o arquivo "dbconfig.js" e configure a variável `connection`:
+3.1. Caso esteja em um notebook ou desktop da escola, apenas comente as linhas de 3 à 8 e retire as barras da frente das linhas de 10 à 15. Caso ocorra algum erro, apague `root` de `password` e deixe-o vazio.  
 
-### 3.1. Caso esteja em um notebook ou desktop da escola, apenas comente as linhas de 3 à 8 e retire as barras da frente das linhas de 10 à 15. Caso ocorra algum erro, apague "root" de "password" e deixe-o vazio.
-
-### 3.2 Caso esteja em uma máquina própria, comente as linhas de 3 à 8, retire as barras da frente das linhas de 10 à 15 e troque os valores de "user" e "password" pelos configurados na máquina atual.
+3.2 Caso esteja em uma máquina própria, comente as linhas de 3 à 8, retire as barras da frente das linhas de 10 à 15 e troque os valores de `user` e `password` pelos configurados na máquina atual.
 
 
-## 4. Abra o terminal (bash) na pasta ./frontend e rode o comando "npm install expo@57"
+#### 4. Abra o terminal (bash) na pasta ./frontend e rode o comando `npm install expo@57`
 
 
 # TUDO PRONTO
 
-## Para inicializar o projeto, no terminal, rode:
-1. "node server.js" em ./backend
-2. "npx expo start" em ./frontend
+### Para inicializar o projeto, no terminal, rode:
+1. `node server.js` em ./backend
+2. `npx expo start` em ./frontend
 3. Escaneie o QR code e aproveite!
