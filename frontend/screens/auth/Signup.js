@@ -4,17 +4,15 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 import * as Yup from 'yup';
 
-// Componentes locais
+// Local components
 import Button from '../../components/Button';
 import { Colors, Fonts } from '../../components/Theme';
 import LogoTitle from '../../components/LogoTitle';
 import FormInput from '../../components/FormInput';
 import ScreenWrapper from '../../components/ScreenWrapper';
 
-const API_URL = `http://192.168.0.239:3000`;
-// const API_URL = `http://10.81.46.69:3000`;
-
-// const API_URL = `http://10.81.46.198:3000`;
+// IP
+import { API_URL } from '../../services/api';
 
 const signupSchema = Yup.object().shape({
     name: Yup.string()
@@ -229,8 +227,19 @@ export default function SignUpScreen({ navigation }) {
                                     value={formData.birthDate || new Date()}
                                     mode='date'
                                     display='default'
-                                    onChange={onChangeDate}
                                     maximumDate={new Date()}
+                                    onValueChange={(event, selectedDate) => {
+                                        if (Platform.OS === 'android') {
+                                            setShowPicker(false);
+                                        }
+
+                                        if (selectedDate) {
+                                            handleInputChange('birthDate', selectedDate);
+                                        }
+                                    }}
+                                    onDismiss={() => {
+                                        setShowPicker(false);
+                                    }}
                                 />
                             )}  
                         </>

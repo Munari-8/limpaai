@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { Image } from 'expo-image';
 
-// Componentes locais
+// Local components
 import Button from '../../components/Button';
 import { Colors, Fonts } from '../../components/Theme';
 

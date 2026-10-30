@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
 
-// Componentes locais
+// Local components
 import Button from '../../components/Button';
 import { Colors, Fonts } from '../../components/Theme';
 import LogoTitle from '../../components/LogoTitle';
@@ -9,16 +9,14 @@ import FormInput from '../../components/FormInput';
 import ScreenWrapper from '../../components/ScreenWrapper';
 import { useAuth } from '../../contexts/AuthContext';
 
-const API_URL = `http://192.168.0.239:3000`;
-// const API_URL = `http://10.81.46.69:3000`;
-
-// const API_URL = `http://10.81.46.198:3000`;
+// IP
+import { API_URL } from '../../services/api';
 
 export default function LoginScreen({ navigation }) {
-    // Contexto de autenticação
+    // Auth context
     const { login } = useAuth();
 
-    // Estados para armazenar o e-mail, senha e estado de carregamento
+    // States to save e-mail, password and loading state
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);

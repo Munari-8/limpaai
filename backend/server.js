@@ -26,7 +26,7 @@ const upload = multer({ storage: storage });
 
 // Cadastro de usuários
 app.post('/usuarios', async (req, res) => {
-    const { nome, email, senha, data_nascimento, tipo_usuario, cidade, bairro, foto_perfil, genero, nome_exibicao } = req.body;
+    const { id_categoria, nome, email, senha, data_nascimento, tipo_usuario, cidade, bairro, foto_perfil, genero, nome_exibicao } = req.body;
 
     // Geração do username
     let username = null;
@@ -44,7 +44,7 @@ app.post('/usuarios', async (req, res) => {
     const sql = `
         INSERT INTO USUARIO
         ( id_categoria, nome, email, senha, data_nascimento, tipo_usuario, cidade, bairro, foto_perfil, genero, username, nome_exibicao )
-        VALUES (    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
+        VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
     `;
 
     try {
@@ -53,6 +53,7 @@ app.post('/usuarios', async (req, res) => {
         connection.query(
             sql,
             [
+                id_categoria || 1,
                 nome,
                 email,
                 encryptedPassword,

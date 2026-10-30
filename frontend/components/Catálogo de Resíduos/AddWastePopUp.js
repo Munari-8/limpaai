@@ -96,7 +96,6 @@ export default function AddWastePopUp({ visible, onClose }) {
                         <Button
                             text={'Enviar Sugestão'}
                             flex={true}
-                            
                         />
                     </View>
                 </View>
