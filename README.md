@@ -1,7 +1,7 @@
 # CONFIGURAÇÕES PARA ANTES DE INICIAR O PROJETO
 
 
-### 1. Crie e prepare o banco de dados via MySQL Workbench colando o seguinte código e executando-o:
+#### 1. Crie e prepare o banco de dados via MySQL Workbench colando o seguinte código e executando-o:
 
 ```
 CREATE DATABASE limpaai;
@@ -101,9 +101,9 @@ EXPO_PUBLIC_API_URL=SEU_IP:3000
 ```
 
 Como descobrir seu IP via CLI (terminal):  
-Windows: ipconfig  
-macOS: ipconfig getifaddr en0  
-Linux: ip a
+Windows: `ipconfig`  
+macOS: `ipconfig getifaddr en0`  
+Linux: `ip a`
 
 
 #### 3. Dentro da pasta ./backend, acesse o arquivo "dbconfig.js" e configure a variável `connection`:
@@ -117,7 +117,7 @@ Linux: ip a
 
 # TUDO PRONTO
 
-### Para inicializar o projeto, no terminal, rode:
+#### Para inicializar o projeto, no terminal, rode:
 1. `node server.js` em ./backend
 2. `npx expo start` em ./frontend
 3. Escaneie o QR code e aproveite!
