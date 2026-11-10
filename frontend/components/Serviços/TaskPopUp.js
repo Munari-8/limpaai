@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import {
     StyleSheet, View, Text, TouchableOpacity, Modal,
-    TouchableWithoutFeedback, FlatList, Dimensions, ScrollView
+    TouchableWithoutFeedback, FlatList, Dimensions, ScrollView,
+    Alert
 } from "react-native";
 
 // Expo
@@ -12,24 +13,86 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Colors, Fonts } from "../Theme";
 import Button from "../Button";
 import TaskCancelPopUp from "./TaskCancelPopUp";
+import { API_URL } from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function TaskPopUp({
-    visible, onClose, lightColor, color, taskIcon, name, description, date,
-    startTime, endTime, address, image, personCount, username, avatar, avatarPlaceholder
+    visible, onClose, lightColor, color, taskIcon, name, description, date, startTime, endTime,
+    address, image, personCount, username, avatar, avatarPlaceholder, idServico, minhaSituacao, onRefresh
 }){
-    const [isSubscribed, setIsSubscribed] = useState(true);
+    const { user } = useAuth;
+    const [loading, setLoading] = useState(false);
 
-    const handleCancel = () => {
-        setIsSubscribed(false);
-        setIsOpen(false);
-        onClose();
-    }
+    // TaskCancelPopUp control / Controle do TaskCancelPopUp
+    const [ isCancelModalOpen, setIsCancelModalOpen ] = useState(false);
+
+    const handleCancelParticipation = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${API_URL}/participacoes`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id_usuario: user?.id,
+                    id_servico: idServico
+                })
+            });
+
+            if (response.ok) {
+                Alert.alert("Sucesso", "Participação/Solicitação cancelada com sucesso.");
+                if (onRefresh) onRefresh();
+                setIsCancelModalOpen(false);
+                onClose();
+            } else {
+                const data = await response.json();
+                Alert.alert("Erro", data.mensagem || "Não foi possível cancelar.");
+            }
+        } catch (error) {
+            console.log(error);
+            Alert.alert("Erro de conexão", "Não foi possível contatar o servidor.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRequestParticipation = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${API_URL}/participacoes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id_usuario: user?.id,
+                    id_servico: idServico
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                Alert.alert("Sucesso!", "Sua solicitação foi enviada ao organizador.")
+                if (onRefresh) onRefresh();
+                onClose();
+            } else {
+                Alert.alert("Erro", data.mensagem || "Não foi possível enviar a solicitação")
+            }
+        } catch (error) {
+            console.log(error);
+            Alert.alert("Erro de conexão", "Não foi possível contatar o servidor.");
+        } finally {
+            setLoading(false);
+        }
+    };
     
-    const fullTime = `${startTime} - ${endTime}`
+    const fullTime = `${startTime}\n${endTime}`;
 
-    // Controle das imagens
+    // Image control
     const [activeIndex, setActiveIndex] = useState(null);
     const [imageSize, setImageSize] = useState({})
 
@@ -38,9 +101,6 @@ export default function TaskPopUp({
         'https://cloudfront-us-east-1.images.arcpublishing.com/estadao/THWRKLGVOVEZVC5D4Q3UD2K3VM.jpg',
         'https://futebolatino.com.br/wp-content/uploads/2023/11/Suarez-Gremio.jpg'
     ];
-
-    // Controle do TaskCancelPopUp
-    const [isOpen, setIsOpen] = useState(false);
 
     return (
         <>
@@ -51,10 +111,10 @@ export default function TaskPopUp({
             onRequestClose={onClose}
         >
             <TaskCancelPopUp
-                visible={isOpen}
-                onClose={() => setIsOpen(false)}
+                visible={isCancelModalOpen}
+                onClose={() => setIsCancelModalOpen(false)}
                 name={name}
-                onConfirm={handleCancel}
+                onConfirm={handleCancelParticipation}
             />
             
             <View style={styles.bgShadow}>
@@ -194,44 +254,51 @@ export default function TaskPopUp({
                                 </View>
                             </View>
                             
-                            {isSubscribed && (
+                            {minhaSituacao === 'aprovado' && (
                                 <View style={[styles.tag, { marginTop: '4%' }]}>
                                     <Button
-                                        text={'Cancelar Participação'}
+                                        text={loading ? 'Carregando...' : 'Cancelar Participação'}
                                         color={color}
                                         flex={true}
-                                        onPress={() => setIsOpen(true)}
+                                        onPress={() => setIsCancelModalOpen(true)}
+                                        disabled={loading}
                                     />
-
                                     <TouchableOpacity>
-                                        <MaterialCommunityIcons
-                                            name='message-text'
-                                            size={40}
-                                            color={color}
-                                        />
+                                        <MaterialCommunityIcons name='message-text' size={40} color={color} />
                                     </TouchableOpacity>
                                 </View>
                             )}
 
-                            {!isSubscribed && (
-                                <View style={styles.tag}>
+                            {minhaSituacao === 'pendente' && (
+                                <View style={[styles.tag, { marginTop: '4%' }]}>
                                     <Button
-                                        text={'Pedir para Participar'}
+                                        text={loading ? 'Carregando...' : 'Solicitação Pendente (Cancelar)'}
+                                        color={Colors.naoReciclavel || '#FF5733'}
+                                        flex={true}
+                                        onPress={() => setIsCancelModalOpen(true)}
+                                        disabled={loading}
+                                    />
+                                    <TouchableOpacity>
+                                        <MaterialCommunityIcons name='message-text' size={40} color={color} />
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+
+                            {!minhaSituacao && (
+                                <View style={[styles.tag, { marginTop: '4%' }]}>
+                                    <Button
+                                        text={loading ? 'Carregando...' : 'Pedir para Participar'}
                                         color={color}
                                         flex={true}
+                                        onPress={handleRequestParticipation}
+                                        disabled={loading}
                                     />
-
                                     <TouchableOpacity>
-                                        <MaterialCommunityIcons
-                                            name='message-text'
-                                            size={40}
-                                            color={color}
-                                        />
+                                        <MaterialCommunityIcons name='message-text' size={40} color={color} />
                                     </TouchableOpacity>
                                 </View>
                             )}
                         </ScrollView>
-                        
                     </View>
             </View>
         </Modal>
@@ -258,7 +325,6 @@ export default function TaskPopUp({
                     keyExtractor={(item, index) => index.toString()}
                     renderItem={({ item, index }) => {
                         const dims = imageSize[index];
-
                         const boxStyle = dims
                             ? { width: dims.width, height: dims.height }
                             : { width: screenWidth, height: screenHeight };
@@ -278,7 +344,6 @@ export default function TaskPopUp({
                                                 contentFit="contain"
                                                 onLoad={(event) => {
                                                     const { width, height } = event.source;
-
                                                     if (!dims) {
                                                         const scale = Math.min(screenWidth / width, screenHeight / height);
                                                         setImageSize(prev => ({
@@ -359,19 +424,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.b75
     },
-    imageContainer: {
-        width: '100%',
-        height: '50%',
-
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    clickableOverlay: {
-        flex: 1,
-
-        width: '100%',
-        backgroundColor: 'transparent'
-    },
     fullscreenClickableArea: {
         flex: 1,
         width: '100%',
@@ -400,10 +452,6 @@ const styles = StyleSheet.create({
     },
 
     // Imagem
-    fullscreenImage: {
-        width: '100%',
-        height: '100%'
-    },
     avatar: {
         width: 40,
         height: 40,

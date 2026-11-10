@@ -23,7 +23,7 @@ export default function AddWastePopUp({ visible, onClose }) {
         'Papel',
         'Orgânico',
         'Não Reciclável'
-    ]
+    ];
 
     return (
         <Modal
@@ -50,13 +50,13 @@ export default function AddWastePopUp({ visible, onClose }) {
                         setValue={setName}
                     />
 
-                    <View style={styles.tag}>
+                    <View style={styles.label}>
                         <MaterialIcons
                             name='bookmark'
                             size={24}
                         />
 
-                        <Text style={styles.textTag}>Tipo do Resíduo</Text>
+                        <Text style={styles.textLabel}>Tipo do Resíduo</Text>
                     </View>
 
                     <FormSelect
@@ -66,13 +66,13 @@ export default function AddWastePopUp({ visible, onClose }) {
                         onSelect={setWasteType}
                     />
 
-                    <View style={styles.tag}>
+                    <View style={styles.label}>
                         <MaterialIcons
                             name='edit'
                             size={24}
                         />
 
-                        <Text style={styles.textTag}>Observações</Text>
+                        <Text style={styles.textLabel}>Observações</Text>
                     </View>
 
                     <FormInput2
@@ -83,13 +83,13 @@ export default function AddWastePopUp({ visible, onClose }) {
                         setValue={setNotes}
                     />
 
-                    <View style={styles.tag}>
+                    <View style={styles.label}>
                         <MaterialIcons
                             name='image'
                             size={24}
                         />
 
-                        <Text style={styles.textTag}>Anexar imagem</Text>
+                        <Text style={styles.textLabel}>Anexar imagem</Text>
                     </View>
 
                     <View style={{ width: '100%', marginTop: 24, flexDirection: 'row' }}>
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         overflow: 'hidden'
     },
-    tag: {
+    label: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 2,
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
 
         marginBottom: 8
     },
-    textTag: {
+    textLabel: {
         fontFamily: Fonts.bold,
         fontSize: 16
     }

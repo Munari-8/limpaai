@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 
 // Expo
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -9,35 +9,69 @@ import { Colors, Fonts } from "../../components/Theme";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import ToggleList from "../../components/ToggleList";
 import TaskBox from "../../components/Serviços/TaskBox";
+import MuralMenu from "../../components/Serviços/MuralMenu";
+import { API_URL } from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function MainMuralScreen() {
-    const [isOpen, setIsOpen] = useState(true);
+    const { user } = useAuth();
+    const [servicos, setServicos] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const loadServicos = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${API_URL}/servicos?id_usuario=${user?.id}`);
+            const data = await response.json();
+            if (response.ok) {
+                setServicos(data);
+            }
+        } catch (error) {
+            console.log("Erro ao carregar serviços:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadServicos();
+    }, []);
 
     return (
         <ScreenWrapper>
             <View style={styles.innerContainer}>
-                <View style={styles.main}>
+                <ScrollView style={styles.main} showVerticalScrollIndicator={false}>
                     <ToggleList
-                        text={'Serviços por perto'}
+                        text={'Serviços disponíveis'}
                     >
-                        <TaskBox
-                            taskType={'animais'}
-                            name={'SERVIÇO'}
-                            description={'Descrição.'}
-                            date={'dd/mm/aaaa'}
-                            startTime={'00:00'}
-                            endTime={'00:00'}
-                            address={'Endereço'}
-                            username={'Usuário'}
-                        />
+                        {loading ? (
+                            <ActivityIndicator size="large" color={Colors.greenLA1} />
+                        ) : (
+                            servicos.map((item) => (
+                                <TaskBox
+                                    key={item.id_servico}
+                                    idServico={item.id_servico}
+                                    taskType={getTaskType(item.titulo)}
+                                    name={item.titulo}
+                                    description={item.descricao}
+                                    date={item.data}
+                                    startTime={item.horario}
+                                    endTime={item.horario}
+                                    address={item.endereco}
+                                    username={item.nome_ofertante}
+                                    registeredPeople={item.inscritos_confirmados}
+                                    personLimit={item.vagas_max}
+                                    minhaSituacao={item.minha_situacao}
+                                    avatarPlaceholder={item.foto_ofertante}
+                                    onRefresh={loadServicos}
+                                />
+                            ))
+                        )}
                     </ToggleList>
+                </ScrollView>
 
-                    <ToggleList
-                        text={'Outros Serviços'}
-                    >
-
-                    </ToggleList>
-                </View>
+                {/* Botão flutuante para criar novos serviços */}
+                <MuralMenu onServiceCreated={loadServicos} />
             </View>
         </ScreenWrapper>
     );
@@ -48,15 +82,11 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.background,
 
-        alignItems: 'center',
-        justifyContent: 'center',
-
         paddingVertical: '5%',
         paddingHorizontal: '5%'
     },
     main: {
         flex: 1,
-        top: '10%',
         width: '100%',
     }
 })

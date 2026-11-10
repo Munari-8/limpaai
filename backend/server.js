@@ -24,21 +24,21 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// Cadastro de usuários
+// User sign up / Cadastro de usuários
 app.post('/usuarios', async (req, res) => {
     const { id_categoria, nome, email, senha, data_nascimento, tipo_usuario, cidade, bairro, foto_perfil, genero, nome_exibicao } = req.body;
 
-    // Geração do username
+    // Username gen / Geração do username
     let username = null;
     if (nome) {
         username = nome
         .trim()
-        .normalize(`NFD`)                // Desmembra acentos
-        .replace(/[\u0300-\u036f]/g, '') // Remove acentos isolados
-        .toLowerCase()                   // Minúsculo
-        .split(/\s+/)                    // Divide por espaços em branco
-        .slice(0, 2)                     // Duas primeiras palavras
-        .join('');                       // Junta tudo sem espaços
+        .normalize(`NFD`)                // Breaks down accents     / Desmembra acentos
+        .replace(/[\u0300-\u036f]/g, '') // Remove isolated accents / Remove acentos isolados
+        .toLowerCase()                   // Lowercase               / Minúsculo
+        .split(/\s+/)                    // Divide by whitespace    / Divide por espaços em branco
+        .slice(0, 2)                     // First 2 words           / Duas primeiras palavras
+        .join('');                       // Remove spaces           / Tira os espaços
     }
 
     const sql = `
@@ -106,6 +106,7 @@ app.get('/usuarios', (req, res) => {
     });
 });
 
+// User login / Login de usuários
 app.post(`/login`, (req, res) => {
     const { email, senha } = req.body;
 
@@ -153,7 +154,7 @@ app.post(`/login`, (req, res) => {
     });
 });
 
-// Buscar dados do usuário (EditProfile)
+// Get user data / Buscar dados do usuário (EditProfile)
 app.get('/usuarios/:id', (req, res) => {
     const { id } = req.params;
     const sql = `SELECT * FROM USUARIO WHERE id_usuario = ?`;
@@ -176,7 +177,7 @@ app.get('/usuarios/:id', (req, res) => {
     });
 });
 
-// Atualizar dados do usuário (EditProfile)
+// Update user data / Atualizar dados do usuário (EditProfile)
 app.put('/usuarios/:id', upload.single('foto_perfil'), (req, res) => {
     const { id } = req.params;
     const { nome, nome_exibicao, genero, cidade, bairro, foto_perfil_atual } = req.body;
@@ -211,10 +212,123 @@ app.put('/usuarios/:id', upload.single('foto_perfil'), (req, res) => {
     )
 })
 
-//////////////////////////
-// Exclusivo moderadores//
-//////////////////////////
+//////////////
+// SERVIÇOS //
+//////////////
 
+// Add service / Criar Serviço
+app.post('/servicos', (req, res) => {
+    const { id_ofertante, titulo, descricao, endereco, latitude, longitude, data, horario, vagas_max } = req.body
+
+    const sql = `
+        INSERT INTO SERVICO
+        (if_ofertante, titulo, descricao, endereco, latitude, longitude, data, horario, status, vagas_max)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'aberto', ?)
+    `;
+
+    connection.query(
+        sql,
+        [id_ofertante, titulo, descricao, endereco, latitude || null, longitude || null, data, horario, vagas_max || 10],
+        (erro, resultado) => {
+            if (erro) {
+                console.log(erro);
+                return res.status(500).json({ mensagem: 'Erro ao criar serviço' });
+            }
+            res.json({  mensagem: 'Serviço criado com sucesso!', id_servico: resultado.insertId });
+        }
+    );
+});
+
+// List all services / Listar todos os serviços
+app.get('/servicos', (req, res) => {
+    const id_usuario = req.query.id_usuario;
+
+    const sql = `
+        SELECT
+            s.*,
+            u.nome AS nome_ofertante,
+            u.foto_perfil AS foto_ofertante,
+            COUNT(CASE WHEN p.situacao = 'aprovado' THEN 1 END) AS inscritos_confirmados,
+            (
+                SELECT situacao
+                FROM participacao
+                WHERE id_servico = s.id_servico AND id_usuario = ?
+            ) AS minha_situacao
+        FROM SERVICO s
+        JOIN USUARIO u ON s.id_ofertante = u.id_usuario
+        GROUP BY s.id_servico
+        ORDER BY s.data DESC
+    `;
+
+    connection.query(sql, [id_usuario || null], (erro, resultados) => {
+        if (erro) {
+            console.log(erro);
+            return res.status(500).json({ mensagem: 'Erro ao buscar serviços' });
+        }
+        res.json(resultados);
+    });
+});
+
+// Requet participation in a service / Solicitar participação em um serviço
+app.post('/participantes', (req, res) => {
+    const { id_usuario, id_servico } = req.body;
+
+    const sql = `
+        INSERT INTO PARTICIPACAO (id_usuario, id_servico, situacao, inscrito_em)
+        VALUES (?, ?, 'pendente', NOW())
+    `;
+
+    connection.query(sql, [id_usuario, id_servico], (erro, resultado) => {
+        if (erro) {
+            console.log(erro);
+            return res.status(500).json({ mensagem: 'Erro ao solicitar participação' })
+        }
+
+        const sqlNotif = `
+            INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
+            SELECT id_ofertante, 'Novo pedido de participação no seu serviço!', NOW()
+            FROM SERVICO WHERE id_servico = ?
+        `;
+        connection.query(sqlNotif, [id_servico]);
+
+        res.json({ mensagem: 'Solicitação enviada com sucesso!' })
+    });
+});
+
+// Cancel participation/request / Cancelar participação/solicitação
+app.delete('/participacoes', (req, res) => {
+    const { id_usuario, id_servico } = req.body;
+
+    const sql = `DELETE FROM PARTICIPACAO WHERE id_usuario = ? AND id_servico = ?`;
+
+    connection.query(sql, [id_usuario, id_servico], (erro, resultado) => {
+        if (erro) {
+            return res.status(500).json({ mensagem: 'Erro ao cancelar participação' });
+        }
+        res.json({ mensagem: 'Participação cancelada.' });
+    });
+});
+
+// Refuse/accept request / Recusar/aceitar participação
+app.put('/participacoes/status', (req, res) => {
+    const { id_participacao, nova_situacao } = req.body;
+
+    const sql = `UPDATE PARTICIPACAO SET situacao = ? WHERE id_participacao = ?`;
+
+    connection.query(sql, [nova_situacao, id_participacao], (erro, resultado) => {
+        if (erro) {
+            return res.status(500).json({ mensagem: 'Erro ao atualizar situação' });
+        }
+        res.json({ mensagem: `Status atualizado para ${nova_situacao}` });
+    });
+});
+
+///////////////////////////
+//     Exclusive mods    //
+// Exclusivo moderadores //
+///////////////////////////
+
+// Remove user / Remover usuário
 app.delete(`/usuarios/:id` , (req, res) => {
     const userType = req.headers['tipo_usuario'];
 
@@ -240,6 +354,7 @@ app.delete(`/usuarios/:id` , (req, res) => {
     });
 });
 
+// Remove all users / Remover todos os usuários
 app.delete(`/flush`, (req, res) => {
     const sql = `
         DELETE FROM USUARIO
