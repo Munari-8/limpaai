@@ -4,10 +4,11 @@ import { StyleSheet, TextInput, Text, View, useWindowDimensions } from "react-na
 // Componentes locais
 import { Colors, Fonts } from "./Theme"
 
-export default function FormInput({ placeholder, value, setValue, secureTextEntry = false, editable = true, error, ...rest }) {
+export default function FormInput({ placeholder, value, setValue, secureTextEntry = false, editable = true, error, fullWidth = false, ...rest }) {
     const { width } = useWindowDimensions();
 
     const getWidth = () => {
+        if (fullWidth) return '100%';
         if (width > 1024) return '40%'; // Big desktop
         if (width > 768) return '60%';  // Tablet or small desktop
         return '80%';                   // Cell phone
