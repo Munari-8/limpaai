@@ -51,13 +51,14 @@ export default function MainMuralScreen() {
                                 <TaskBox
                                     key={item.id_servico}
                                     idServico={item.id_servico}
-                                    taskType={getTaskType(item.titulo)}
+                                    taskType={item.tipo}
                                     name={item.titulo}
                                     description={item.descricao}
                                     date={item.data}
-                                    startTime={item.horario}
-                                    endTime={item.horario}
+                                    startTime={item.horario_inicio}
+                                    endTime={item.horario_fim}
                                     address={item.endereco}
+                                    imagens={item.imagens}
                                     username={item.nome_ofertante}
                                     registeredPeople={item.inscritos_confirmados}
                                     personLimit={item.vagas_max}
@@ -82,8 +83,13 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.background,
 
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+
         paddingVertical: '5%',
-        paddingHorizontal: '5%'
+        paddingHorizontal: '5%',
+        marginTop: 40,
+        marginBottom: 76
     },
     main: {
         flex: 1,

@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Alert, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
-import DateTimePicker from  "@react-native-community/datetimepicker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from 'expo-image-picker';
-import { WebView } from 'react-native-webview'
+import { WebView } from 'react-native-webview';
 
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
+import { File } from 'expo-file-system'
 
 // Local
 import { Colors, Fonts } from "../Theme";
@@ -22,7 +23,8 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
     const [descricao, setDescricao] = useState('');
     const [taskType, setTaskType] = useState('');
     const [data, setData] = useState('');
-    const [horario, setHorario] = useState('');
+    const [horarioInicio, setHorarioInicio] = useState('');
+    const [horarioFim, setHorarioFim] = useState('');
     const [vagasMax, setVagasMax] = useState('');
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -33,9 +35,10 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
         lng: -51.1474
     });
 
-    // Mobile pickers control
+    // Pickers control
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [showTimePicker, setshowTimePicker] = useState(false);
+    const [showStartPicker, setShowStartPicker] = useState(false);
+    const [showEndPicker, setShowEndPicker] = useState(false);
 
     const typeList = [
         'Animais',
@@ -51,34 +54,17 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
             <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
             <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-            <style>
-                body, html, #map { height: 100%; margin: 0; padding: 0; }
-            </style>
+            <style>body, html, #map { height: 100%; margin: 0; padding: 0; }</style>
         </head>
         <body>
             <div id="map"></div>
             <script>
                 var map = L.map('map').setView([${coords.lat}, ${coords.lng}], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: 'OpenStreetMap'
-                }).addTo(map);
-
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
                 var marker = L.marker([${coords.lat}, ${coords.lng}], {draggable: true}).addTo(map);
-
-                function sendCoords(lat, lng) {
-                    window.ReactNativeWebView.postMessage(JSON.stringify({ lat: lat, lng: lng }));
-                }
-
-                marker.on('dragend', function(e) {
-                    var position = marker.getLatLng();
-                    sendCoords(position.lat, position.lng);
-                });
-
-                map.on('click', function(e) {
-                    marker.setLatLng(e.latlng);
-                    sendCoords(e.latlng.lat, e.latlng.lng);
-                });
+                function sendCoords(lat, lng) { window.ReactNativeWebView.postMessage(JSON.stringify({ lat: lat, lng: lng })); }
+                marker.on('dragend', function(e) { sendCoords(marker.getLatLng().lat, marker.getLatLng().lng); });
+                map.on('click', function(e) { marker.setLatLng(e.latlng); sendCoords(e.latlng.lat, e.latlng.lng); });
             </script>
         </body>
         </html>
@@ -86,17 +72,24 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
 
     const handleWebMapMessage = (event) => {
         try {
-            const data = JSON.parse(event.nativeEvent.data);
-            if (data.lat && data.lng) {
-                setCoords({ lat: data.lat, lng: data.lng });
-            }
+            const parsed = JSON.parse(event.nativeEvent.data);
+            if (parsed.lat && parsed.lng) setCoords({ lat: parsed.lat, lng: parsed.lng });
         } catch (err) {
-            console.log("Erro ao receber coordernadas:", err);
+            console.log(err);
         }
     };
 
-    const handleConfirmLocation = () => {
-        if (!endereco) {
+    const handleConfirmLocation = async () => {
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}&zoom=18&addressdetails=1`, {
+                headers: {
+                    'User-Agent': 'LimpaAI-App'
+                }
+            });
+            const json = await res.json();
+            
+            setEndereco(json.display_name || `Lat: ${coords.lat.toFixed(4)}, Long: ${coords.lng.toFixed(4)}`);
+        } catch (error) {
             setEndereco(`Lat: ${coords.lat.toFixed(4)}, Long: ${coords.lng.toFixed(4)}`);
         }
         setIsMapModalOpen(false);
@@ -113,7 +106,7 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
 
         const remainingSlots = 10 - images.length;
         if (remainingSlots <= 0) {
-            Alert.alert("Limite atingido", "Você pode enviar no máximo 10 imagens.")
+            Alert.alert("Limite atingido", "Máximo de 10 imagens.");
             return;
         }
 
@@ -125,8 +118,18 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
         });
 
         if (!result.canceled && result.assets) {
-            const selectedUris = result.assets.map(asset => asset.uri);
-            setImages(prevImages => [...prevImages, ...selectedUris].slice(0, 10));
+            setImages(prev => [...prev, ...result.assets.map(a => a.uri)].slice(0, 10));
+        }
+    };
+
+    const appendImage = async (formData, uri, index) => {
+        const filename = uri.split('/').pop() || `image_${index}.jpg`;
+
+        if (Platform.OS === 'web') {
+            const blob = await (await fetch(uri)).blob();
+            formData.append('images', blob, filename);
+        } else {
+            formData.append('images', new File(uri));
         }
     };
 
@@ -134,7 +137,7 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
         setImages(images.filter((_, index) => index !== indexToRemove));
     };
 
-    // Date and time pickers stuff
+    // Date and time formatters
     const formatDateForMySQL = (dateObj) => {
         if (!dateObj || !(dateObj instanceof Date)) return '';
         const year = dateObj.getFullYear();
@@ -170,68 +173,91 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
         }
     };
 
-    const handleWebTimeChange = (e) => {
+    const handleWebStartTimeChange = (e) => {
         const val = e.target.value;
         if (val) {
             const [hours, minutes] = val.split(':');
             const timeObj = new Date();
             timeObj.setHours(parseInt(hours), parseInt(minutes), 0);
-            setHorario(timeObj);
+            setHorarioInicio(timeObj);
         } else {
-            setHorario(null);
+            setHorarioInicio(null);
+        }
+    };
+
+    const handleWebEndTimeChange = (e) => {
+        const val = e.target.value;
+        if (val) {
+            const [hours, minutes] = val.split(':');
+            const timeObj = new Date();
+            timeObj.setHours(parseInt(hours), parseInt(minutes), 0);
+            setHorarioFim(timeObj);
+        } else {
+            setHorarioFim(null);
         }
     };
 
     const formattedDate = data && data instanceof Date ? data.toLocaleDateString('pt-BR') : '';
     const webDateValue = data && data instanceof Date ? formatDateForMySQL(data) : '';
 
-    const formattedTime = horario && horario instanceof Date
-        ? horario.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    const formattedStartTime = horarioInicio && horarioInicio instanceof Date
+        ? horarioInicio.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
         : '';
-    const webTimeValue = horario && horario instanceof Date
-        ? `${String(horario.getHours()).padStart(2, '0')}:${String(horario.getMinutes()).padStart(2, '0')}`
+    const webStartTimeValue = horarioInicio && horarioInicio instanceof Date
+        ? `${String(horarioInicio.getHours()).padStart(2, '0')}:${String(horarioInicio.getMinutes()).padStart(2, '0')}`
+        : '';
+
+    const formattedEndTime = horarioFim && horarioFim instanceof Date
+        ? horarioFim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        : '';
+    const webEndTimeValue = horarioFim && horarioFim instanceof Date
+        ? `${String(horarioFim.getHours()).padStart(2, '0')}:${String(horarioFim.getMinutes()).padStart(2, '0')}`
         : '';
 
     const handleCreateService = async () => {
-        if (!titulo || !endereco || !data || !horario) {
-            Alert.alert("Atenção", "Preencha os campos obrigatórios.");
+        if (!titulo || !endereco || !data || !horarioInicio || !horarioFim) {
+            Alert.alert("Atenção", "Preencha todos os campos obrigatórios, incluindo os horários.");
             return;
         }
 
         try {
             setLoading(true);
+            const formData = new FormData();
+            formData.append('id_ofertante', String(user?.id));
+            formData.append('titulo', titulo);
+            formData.append('descricao', descricao);
+            formData.append('taskType', taskType || 'Outros');
+            formData.append('endereco', endereco);
+            formData.append('data', formatDateForMySQL(data));
+            formData.append('horario_inicio', formatTimeForMySQL(horarioInicio));
+            formData.append('horario_fim', formatTimeForMySQL(horarioFim));
+            formData.append('vagas_max', String(parseInt(vagasMax) || 10));
+
+            for (let i = 0; i < images.length; i++) {
+                await appendImage(formData, images[i], i);
+            }
+
             const response = await fetch(`${API_URL}/servicos`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    id_ofertante: user?.id,
-                    titulo,
-                    descricao,
-                    endereco,
-                    data,
-                    horario,
-                    vagas_max: parseInt(vagasMax) || 10,
-                    images
-                })
+                body: formData
             });
 
             const result = await response.json();
 
             if (response.ok) {
                 Alert.alert("Sucesso!", "Serviço criado com sucesso.");
-                // Clear form fields
                 setTitulo('');
                 setDescricao('');
+                setTaskType('');
                 setEndereco('');
                 setData('');
-                setHorario('');
+                setHorarioInicio('');
+                setHorarioFim('');
                 setVagasMax('');
                 setImages([]);
                 if (onSuccess) onSuccess();
             } else {
-                Alert.alert("Erro", result.mensagem || "Não foi possível criar o serviço.")
+                Alert.alert("Erro", result.mensagem || "Não foi possível criar o serviço.");
             }
         } catch (error) {
             console.log(error);
@@ -264,23 +290,19 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
                         />
                     ) : (
                         <View style={styles.webMapFallback}>
-                            <MaterialCommunityIcons
-                                name="map-search"
-                                size={64}
-                                color={Colors.greenLA1}
-                            />
+                            <MaterialCommunityIcons name="map-search" size={64} color={Colors.greenLA1} />
                             <Text style={styles.webMapText}>Seleção de mapa disponível no mobile</Text>
                         </View>
                     )}
 
                     <View style={styles.mapModalFooter}>
-                            <Text style={styles.mapInstructionText}>Toque no mapa ou arraste o pino para definir a posição</Text>
-                            <Button
-                                text={'Confirmar localização'}
-                                color={Colors.greenLA1}
-                                onPress={handleConfirmLocation}
-                            />
-                        </View>
+                        <Text style={styles.mapInstructionText}>Toque no mapa ou arraste o pino para definir a posição</Text>
+                        <Button
+                            text={'Confirmar localização'}
+                            color={Colors.greenLA1}
+                            onPress={handleConfirmLocation}
+                        />
+                    </View>
                 </View>
             </Modal>
 
@@ -310,11 +332,7 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
                         />
 
                         <View style={styles.label}>
-                            <MaterialIcons
-                                name="bookmark"
-                                size={24}
-                            />
-
+                            <MaterialIcons name="bookmark" size={24} />
                             <Text style={styles.labelText}>Tipo do Serviço</Text>
                         </View>
                         
@@ -325,12 +343,9 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
                             onSelect={setTaskType}
                         />
 
+                        {/* DATA */}
                         <View style={styles.label}>
-                            <MaterialCommunityIcons
-                                name="calendar"
-                                size={24}
-                            />
-
+                            <MaterialCommunityIcons name="calendar" size={24} />
                             <Text style={styles.labelText}>Data</Text>
                         </View>
 
@@ -340,17 +355,7 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
                                     type="date"
                                     value={webDateValue}
                                     onChange={handleWebDateChange}
-                                    style={{
-                                        backgroundColor: Colors.formInputBg || '#f0f0f0',
-                                        padding: '12px 16px',
-                                        width: '100%',
-                                        borderRadius: '12px',
-                                        border: '1px solid #ccc',
-                                        fontFamily: 'sans-serif',
-                                        fontSize: '14px',
-                                        color: '#333',
-                                        boxSizing: 'border-box'
-                                    }}
+                                    style={styles.webInput}
                                 />
                             </View>
                         ) : (
@@ -376,63 +381,43 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
                                         value={data || new Date()}
                                         mode='date'
                                         display='default'
-                                        minimunDate={new Date()}
+                                        minimumDate={new Date()}
                                         onValueChange={(event, selectedDate) => {
-                                            if (Platform.OS === 'android') {
-                                                setShowDatePicker(false);
-                                            }
-                                            if (selectedDate) {
-                                                setData(selectedDate);
-                                            }
+                                            if (Platform.OS === 'android') setShowDatePicker(false);
+                                            if (selectedDate) setData(selectedDate);
                                         }}
-                                        onDismiss={() => {
-                                            setShowDatePicker(false);
-                                        }}
+                                        onDismiss={() => setShowDatePicker(false)}
                                     />
                                 )}
                             </>
                         )}
 
+                        {/* HORÁRIO DE INÍCIO */}
                         <View style={styles.label}>
-                            <MaterialCommunityIcons
-                                name="clock"
-                                size={24}
-                            />
-
-                            <Text style={styles.labelText}>Horário</Text>
+                            <MaterialCommunityIcons name="clock-start" size={24} />
+                            <Text style={styles.labelText}>Horário de Início</Text>
                         </View>
 
                         {Platform.OS === 'web' ? (
                             <View style={{ width: '100%', marginBottom: 8 }}>
                                 <input
                                     type='time'
-                                    value={webTimeValue}
-                                    onChange={handleWebTimeChange}
-                                    style={{
-                                        backgroundColor: Colors.formInputBg || '#f0f0f0',
-                                        padding: '12px 16px',
-                                        width: '100%',
-                                        borderRadius: '12px',
-                                        border: '1px solid #ccc',
-                                        outline: 'none',
-                                        fontFamily: 'sans-serif',
-                                        fontSize: '14px',
-                                        color: '#333',
-                                        boxSizing: 'border-box'
-                                    }}
+                                    value={webStartTimeValue}
+                                    onChange={handleWebStartTimeChange}
+                                    style={styles.webInput}
                                 />
                             </View>
                         ) : (
                             <>
                                 <TouchableOpacity
-                                    onPress={() => setshowTimePicker(true)}
+                                    onPress={() => setShowStartPicker(true)}
                                     style={{ width: '100%' }}
                                     activeOpacity={0.7}
                                 >
                                     <View pointerEvents="none" style={{ width: '100%' }}>
                                         <FormInput
-                                            placeholder={'Selecione o horário'}
-                                            value={formattedTime}
+                                            placeholder={'Selecione o horário de início'}
+                                            value={formattedStartTime}
                                             setValue={() => {}}
                                             editable={false}
                                             fullWidth={true}
@@ -440,31 +425,72 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
                                     </View>
                                 </TouchableOpacity>
 
-                                {showTimePicker && (
+                                {showStartPicker && (
                                     <DateTimePicker
-                                        value={horario || new Date()}
+                                        value={horarioInicio || new Date()}
                                         mode="time"
                                         display="default"
                                         is24Hour={true}
                                         onValueChange={(event, selectedTime) => {
-                                            if (Platform.OS === 'android') {
-                                                setshowTimePicker(false);
-                                            }
-                                            if (selectedTime) {
-                                                setHorario(selectedTime);
-                                            }
+                                            if (Platform.OS === 'android') setShowStartPicker(false);
+                                            if (selectedTime) setHorarioInicio(selectedTime);
                                         }}
                                     />
                                 )}
                             </>
                         )}
 
+                        {/* HORÁRIO DE TÉRMINO */}
                         <View style={styles.label}>
-                            <MaterialIcons
-                                name="image"
-                                size={24}
-                            />
+                            <MaterialCommunityIcons name="clock-end" size={24} />
+                            <Text style={styles.labelText}>Horário de Término</Text>
+                        </View>
 
+                        {Platform.OS === 'web' ? (
+                            <View style={{ width: '100%', marginBottom: 8 }}>
+                                <input
+                                    type='time'
+                                    value={webEndTimeValue}
+                                    onChange={handleWebEndTimeChange}
+                                    style={styles.webInput}
+                                />
+                            </View>
+                        ) : (
+                            <>
+                                <TouchableOpacity
+                                    onPress={() => setShowEndPicker(true)}
+                                    style={{ width: '100%' }}
+                                    activeOpacity={0.7}
+                                >
+                                    <View pointerEvents="none" style={{ width: '100%' }}>
+                                        <FormInput
+                                            placeholder={'Selecione o horário de término'}
+                                            value={formattedEndTime}
+                                            setValue={() => {}}
+                                            editable={false}
+                                            fullWidth={true}
+                                        />
+                                    </View>
+                                </TouchableOpacity>
+
+                                {showEndPicker && (
+                                    <DateTimePicker
+                                        value={horarioFim || new Date()}
+                                        mode="time"
+                                        display="default"
+                                        is24Hour={true}
+                                        onValueChange={(event, selectedTime) => {
+                                            if (Platform.OS === 'android') setShowEndPicker(false);
+                                            if (selectedTime) setHorarioFim(selectedTime);
+                                        }}
+                                    />
+                                )}
+                            </>
+                        )}
+
+                        {/* FOTOS */}
+                        <View style={styles.label}>
+                            <MaterialIcons name="image" size={24} />
                             <Text style={styles.labelText}>Fotos do Local</Text>
                         </View>
 
@@ -472,13 +498,8 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
                             style={styles.imagePickerButton}
                             onPress={handlePickImages}
                         >
-                            <MaterialIcons
-                                name="add-photo-alternate"
-                                size={32}
-                                color={Colors.b50}
-                            />
-
-                            <Text style={styles.imagePickerText}>Anexar Imagens</Text>
+                            <MaterialIcons name="add-photo-alternate" size={32} color={Colors.b50} />
+                            <Text style={styles.imagePickerText}>Anexar Imagens ({images.length}/10)</Text>
                         </TouchableOpacity>
 
                         {images.length > 0 && (
@@ -490,23 +511,16 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
                                             style={styles.removeImgBtn}
                                             onPress={() => handleRemoveImage(index)}
                                         >
-                                            <MaterialIcons
-                                                name="close"
-                                                size={16}
-                                                color="#fff"
-                                            />
+                                            <MaterialIcons name="close" size={16} color="#fff" />
                                         </TouchableOpacity>
                                     </View>
                                 ))}
                             </ScrollView>
                         )}
 
+                        {/* LOCALIZAÇÃO */}
                         <View style={styles.label}>
-                            <MaterialIcons
-                                name="location-pin"
-                                size={24}
-                            />
-
+                            <MaterialIcons name="location-pin" size={24} />
                             <Text style={styles.labelText}>Localização</Text>
                         </View>
 
@@ -523,30 +537,18 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
                             onPress={() => setIsMapModalOpen(true)}
                         >
                             <View style={styles.mapPlaceholderBg}>
-                                <MaterialCommunityIcons
-                                    name="map-marker-radius"
-                                    size={48}
-                                    color={Colors.b50}
-                                />
+                                <MaterialCommunityIcons name="map-marker-radius" size={48} color={Colors.b50} />
                                 <Text style={styles.mapPlaceholderText}>Clique aqui para selecionar no mapa</Text>
                             </View>
                             <View style={styles.mapAdressBar}>
-                                <MaterialIcons
-                                    name="location-pin"
-                                    size={20}
-                                    color={Colors.black}
-                                />
-
-                                <Text style={styles.mapAdressText} numberOfLines={2}>{endereco || 'Clique aqui para abrir o mapa e escolher o local...'}</Text>
+                                <MaterialIcons name="location-pin" size={20} color={Colors.black} />
+                                <Text style={styles.mapAdressText} numberOfLines={2}>{endereco || 'Clique aqui para abrir o mapa...'}</Text>
                             </View>
                         </TouchableOpacity>
 
+                        {/* VAGAS */}
                         <View style={styles.label}>
-                            <MaterialIcons
-                                name="group"
-                                size={24}
-                            />
-
+                            <MaterialIcons name="group" size={24} />
                             <Text style={styles.labelText}>Participantes</Text>
                         </View>
 
@@ -575,10 +577,8 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
 const styles = StyleSheet.create({
     bgShadow: {
         flex: 1,
-
         justifyContent: 'center',
         alignItems: 'center',
-
         backgroundColor: Colors.b25
     },
     backdropTouch: {
@@ -587,48 +587,52 @@ const styles = StyleSheet.create({
     },
     container: {
         backgroundColor: Colors.background,
-
         borderRadius: 24,
         width: '85%',
         maxHeight: '85%',
-
         overflow: 'hidden'
     },
     scrollContent: {
         padding: '5%',
-
         alignItems: 'center'
     },
     label: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 2,
+        paddingTop: 8,
+        paddingBottom: 2,
         width: '100%'
     },
-
-    // Image picker
+    webInput: {
+        backgroundColor: Colors.formInputBg || '#f0f0f0',
+        padding: '12px 16px',
+        width: '100%',
+        borderRadius: '12px',
+        border: '1px solid #ccc',
+        outline: 'none',
+        fontFamily: 'sans-serif',
+        fontSize: '14px',
+        color: '#333',
+        boxSizing: 'border-box'
+    },
     imagePickerButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-
         backgroundColor: Colors.formInputBg,
         width: '100%',
         borderRadius: 16,
-
         padding: 12,
         marginTop: 6,
         gap: 8,
-
         borderWidth: 2,
         borderColor: Colors.b10,
         borderStyle: 'dashed'
     },
     imagePreviewContainer: {
         flexDirection: 'row',
-
         width: '100%',
-
         marginTop: 8,
         marginBottom: 8
     },
@@ -636,9 +640,7 @@ const styles = StyleSheet.create({
         position: 'relative',
         marginRight: 8,
         borderRadius: 8,
-
         overflow: 'hidden',
-
         width: 64,
         height: 64
     },
@@ -650,36 +652,25 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 2,
         right: 2,
-
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         borderRadius: 16,
-
         padding: 2
     },
-
-    // Map
     mapPreviewCard: {
         width: '100%',
         height: 160,
         borderRadius: 16,
-        backgroundColor:  Colors.formInputBg,
-
+        backgroundColor: Colors.formInputBg,
         overflow: 'hidden',
         marginTop: 8,
         marginBottom: 8,
-
         justifyContent: 'center',
-        alignItems: 'center',
-
-        borderWidth: 2,
-        borderColor: Colors.b10
+        alignItems: 'center'
     },
     mapPlaceholderBg: {
         flex: 1,
-
         justifyContent: 'center',
         alignItems: 'center',
-        
         gap: 4
     },
     mapAdressBar: {
@@ -687,16 +678,12 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-
         backgroundColor: Colors.b10,
-
         flexDirection: 'row',
         alignItems: 'center',
         padding: 8,
         gap: 6
     },
-
-    // Map Modal
     mapModalContainer: {
         flex: 1,
         backgroundColor: Colors.background
@@ -721,12 +708,9 @@ const styles = StyleSheet.create({
         gap: 12,
         elevation: 5
     },
-
-    // Text
     textTitle: {
         fontFamily: Fonts.condensedBlack,
         fontSize: 24,
-
         marginBottom: 8
     },
     labelText: {
@@ -742,7 +726,6 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.bold,
         fontSize: 13,
         color: Colors.b50
-
     },
     mapAdressText: {
         fontFamily: Fonts.regular,
@@ -760,4 +743,4 @@ const styles = StyleSheet.create({
         fontSize: 14,
         textAlign: 'center'
     }
-})
+});

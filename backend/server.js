@@ -212,23 +212,31 @@ app.put('/usuarios/:id', upload.single('foto_perfil'), (req, res) => {
     )
 })
 
-//////////////
-// SERVIÇOS //
-//////////////
+///////////
+// TASKS //
+///////////
 
-// Add service / Criar Serviço
-app.post('/servicos', (req, res) => {
-    const { id_ofertante, titulo, descricao, endereco, latitude, longitude, data, horario, vagas_max } = req.body
+// Add task
+app.post('/servicos', upload.array('images', 10), (req, res) => {
+    const {
+        id_ofertante, titulo, descricao, taskType, endereco, latitude,
+        longitude, data, horario_inicio, horario_fim, vagas_max
+    } = req.body
+
+    const imagePaths = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
 
     const sql = `
         INSERT INTO SERVICO
-        (if_ofertante, titulo, descricao, endereco, latitude, longitude, data, horario, status, vagas_max)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'aberto', ?)
+        (id_ofertante, titulo, descricao, tipo, endereco, latitude, longitude, data, horario_inicio, horario_fim, imagens, status, vagas_max)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aberto', ?)
     `;
 
     connection.query(
         sql,
-        [id_ofertante, titulo, descricao, endereco, latitude || null, longitude || null, data, horario, vagas_max || 10],
+        [
+            id_ofertante, titulo, descricao, taskType, endereco, latitude || null,
+            longitude || null,  data, horario_inicio || null, horario_fim || null, JSON.stringify(imagePaths), vagas_max || 10
+        ],
         (erro, resultado) => {
             if (erro) {
                 console.log(erro);
@@ -239,7 +247,7 @@ app.post('/servicos', (req, res) => {
     );
 });
 
-// List all services / Listar todos os serviços
+// List all tasks
 app.get('/servicos', (req, res) => {
     const id_usuario = req.query.id_usuario;
 
@@ -251,11 +259,12 @@ app.get('/servicos', (req, res) => {
             COUNT(CASE WHEN p.situacao = 'aprovado' THEN 1 END) AS inscritos_confirmados,
             (
                 SELECT situacao
-                FROM participacao
+                FROM PARTICIPACAO
                 WHERE id_servico = s.id_servico AND id_usuario = ?
             ) AS minha_situacao
         FROM SERVICO s
         JOIN USUARIO u ON s.id_ofertante = u.id_usuario
+        LEFT JOIN PARTICIPACAO p ON s.id_servico = p.id_servico
         GROUP BY s.id_servico
         ORDER BY s.data DESC
     `;
@@ -269,7 +278,7 @@ app.get('/servicos', (req, res) => {
     });
 });
 
-// Requet participation in a service / Solicitar participação em um serviço
+// Requet participation in a task
 app.post('/participantes', (req, res) => {
     const { id_usuario, id_servico } = req.body;
 
@@ -295,7 +304,7 @@ app.post('/participantes', (req, res) => {
     });
 });
 
-// Cancel participation/request / Cancelar participação/solicitação
+// Cancel participation/request
 app.delete('/participacoes', (req, res) => {
     const { id_usuario, id_servico } = req.body;
 
@@ -309,7 +318,7 @@ app.delete('/participacoes', (req, res) => {
     });
 });
 
-// Refuse/accept request / Recusar/aceitar participação
+// Refuse/accept request
 app.put('/participacoes/status', (req, res) => {
     const { id_participacao, nova_situacao } = req.body;
 
@@ -323,12 +332,11 @@ app.put('/participacoes/status', (req, res) => {
     });
 });
 
-///////////////////////////
-//     Exclusive mods    //
-// Exclusivo moderadores //
-///////////////////////////
+////////////////////
+// Exclusive mods //
+////////////////////
 
-// Remove user / Remover usuário
+// Remove user
 app.delete(`/usuarios/:id` , (req, res) => {
     const userType = req.headers['tipo_usuario'];
 
@@ -354,7 +362,7 @@ app.delete(`/usuarios/:id` , (req, res) => {
     });
 });
 
-// Remove all users / Remover todos os usuários
+// Remove all users
 app.delete(`/flush`, (req, res) => {
     const sql = `
         DELETE FROM USUARIO
@@ -371,6 +379,20 @@ app.delete(`/flush`, (req, res) => {
         res.json({
             mensagem: `Todos os usuários foram deletados com successo`
         });
+    });
+});
+
+// Remove all tasks
+app.delete('/servicos/flush', (req, res) => {
+    const sql = `DELETE FROM SERVICO`;
+
+    connection.query(sql, (erro, resultado) => {
+        if (erro) {
+            console.log(`Erro ao limpar os serviços: ${erro.message}`);
+            return res.status(500).json({ erro: erro.message });
+        }
+
+        res.json({ mensagem: 'Todos os serviços foram deletados com sucesso' });
     });
 });
 

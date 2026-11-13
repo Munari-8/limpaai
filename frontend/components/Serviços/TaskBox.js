@@ -8,41 +8,34 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Colors, Fonts } from "../Theme";
 import TaskPopUp from "./TaskPopUp";
 
-// Formata a data para ser exibida
-const formatDate = (dateString) => {
+// Format date
+const formatDateToBR = (dateString) => {
     if (!dateString) return '';
-
-    const [day, month, year] = dateString.split('/').map(Number);
-    const dateObj = new Date(year, month - 1, day);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (dateObj.getTime() === today.getTime()) return 'Hoje';
-
-    const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-    const monthName = months[dateObj.getMonth()];
-
-    return (year === today.getFullYear())
-        ? `${day} de ${monthName}`
-        : `${day} de ${monthName} de ${year}`;
+    const cleanDate = dateString.split('T')[0];
+    const parts = cleanDate.split('-');
+    if (parts.length === 3) {
+        const [year, month, day] = parts;
+        return `${day}/${month}/${year}`;
+    }
+    return dateString;
 };
 
 export default function TaskBox({
-    taskType, name, description, date, showDate = true, startTime, endTime, address, image, registeredPeople = 0, personLimit = 0, username,
-    showDateTag = false, ...props
+    taskType, name, description, date, showDate = true, startTime, endTime, address, image,
+    registeredPeople = 0, personLimit = 0, username, showDateTag = false, ...props
 }) {
-    // Definição do ícone baseado no tipo do serviço
-    let selectedIcon = ''
+    const normalizedType = taskType ? taskType.toLowerCase() : '';
 
+    // Set icon
     const iconMapping = {
         animais: 'paw',
         hortas: 'leaf',
         limpeza: 'broom'
     };
     
-    const baseIcon = iconMapping[taskType] || 'alert';
+    const baseIcon = iconMapping[normalizedType] || 'alert';
 
-    // Definição do avatar baseado no tipo de serviço
+    // Set avatar
     const avatarPlaceholderMapping = {
         animais: require('../../assets/person/personAnimais.svg'),
         hortas: require('../../assets/person/personHortas.svg'),
@@ -51,29 +44,44 @@ export default function TaskBox({
 
     const avatarPlaceholder = avatarPlaceholderMapping[taskType];
 
-    // Definição de cores baseado no tipo do serviço
+    // Set color
     const bgColorMapping = {
         animais: Colors.animais,
         hortas: Colors.hortas,
         limpeza: Colors.limpeza
     }
 
-    const color = bgColorMapping[taskType] || Colors.naoReciclavel;
-    const darkColor = Colors[`${taskType}Dark`] || Colors.black;
-    const lightColor = Colors[`${taskType}Light`] || Colors.white;
+    const color = bgColorMapping[normalizedType] || Colors.naoReciclavel;
+    const darkColor = Colors[`${normalizedType}Dark`] || Colors.black;
+    const lightColor = Colors[`${normalizedType}Light`] || Colors.white;
 
-    const taskName = name.toUpperCase();
+    const taskName = name ? name.toUpperCase() : '';
 
-    // Formatação da data
-    const formattedDate = formatDate(date);
+    // Format date
+    const formattedDate = formatDateToBR(date);
 
-    // Controles do TaskPopUp
+    // TaskPopUp control
     const [isOpen, setIsOpen] = useState(false);
 
-    // Ajuste de variáveis para exibição
     const personCount = `${registeredPeople}/${personLimit}`
+    const formattedStartTime = startTime ? startTime.slice(0, 5) : '';
+    const formattedEndTime = endTime ? endTime.slice(0,5) : '';
 
-    const resDate = date?.slice(0, -5) || '';
+    // Format time 2 display
+    const timeDisplay = formattedEndTime && formattedEndTime !== formattedStartTime
+        ? `${formattedStartTime} - ${formattedEndTime}`
+        : formattedStartTime;
+
+    const parsedImages = (() => {
+        try {
+            if (typeof imagens === 'string') return JSON.parse(imagens);
+            if (Array.isArray(imagens)) return imagens;
+            if (image) return [image];
+            return [];
+        } catch {
+            return [];
+        }
+    })();
 
     return (
         <View style={{ width: '100%' }}>
@@ -85,11 +93,11 @@ export default function TaskBox({
                 taskIcon={baseIcon}
                 name={taskName}
                 description={description}
-                date={date}
-                startTime={startTime}
-                endTime={endTime}
+                date={formattedDate}
+                startTime={formattedStartTime}
+                endTime={formattedEndTime}
                 address={address}
-                image={image}
+                image={parsedImages}
                 personCount={personCount}
                 username={username}
                 avatarPlaceholder={avatarPlaceholder}
@@ -115,10 +123,7 @@ export default function TaskBox({
                                         size={24}
                                         color={Colors.white}
                                     />
-
-                                    <Text style={styles.text2}>
-                                        {resDate}
-                                    </Text>
+                                    <Text style={styles.text2}>{formattedDate}</Text>
                                 </View>
                             )}
 
@@ -129,9 +134,7 @@ export default function TaskBox({
                                 color={Colors.white}
                             />
 
-                            <Text style={styles.text2}>
-                                {startTime}
-                            </Text>
+                            <Text style={styles.text2}>{timeDisplay}</Text>
                         </View>
                         
                         <View style={styles.centerProps}>
@@ -141,9 +144,7 @@ export default function TaskBox({
                                 color={Colors.white}
                             />
 
-                            <Text style={styles.text2}>
-                                {address}
-                            </Text>
+                            <Text style={styles.text2} numberOfLines={2} ellipsizeMode="tail">{address}</Text>
                         </View>
                         
                         <View style={styles.centerProps}>
@@ -153,9 +154,7 @@ export default function TaskBox({
                                 color={Colors.white}
                             />
 
-                            <Text style={styles.text2}>
-                                {personCount}
-                            </Text>
+                            <Text style={styles.text2}>{personCount}</Text>
                         </View>
                     </View>
                 </View>
