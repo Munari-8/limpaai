@@ -11,14 +11,14 @@ git clone https://github.com/Munari-8/limpaai.git
 CREATE DATABASE limpaai;
 USE limpaai;
 
--- 1. Criação da tabela CATEGORIA_USUARIO (Independente)
+-- 1. Criação da tabela CATEGORIA_USUARIO
 CREATE TABLE CATEGORIA_USUARIO (
     id_categoria_usuario INT(11) NOT NULL AUTO_INCREMENT,
     nome_categoria VARCHAR(32) NOT NULL,
     PRIMARY KEY (id_categoria_usuario)
 ) ENGINE=InnoDB;
 
--- 2. Criação da tabela RESIDUO (Independente)
+-- 2. Criação da tabela RESIDUO
 CREATE TABLE RESIDUO (
     id_residuo INT(11) NOT NULL AUTO_INCREMENT,
     nome VARCHAR(88) NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE RESIDUO (
     PRIMARY KEY (id_residuo)
 ) ENGINE=InnoDB;
 
--- 3. Criação da tabela USUARIO (Depende de CATEGORIA_USUARIO)
+-- 3. Criação da tabela USUARIO
 CREATE TABLE USUARIO (
     id_usuario INT(11) NOT NULL AUTO_INCREMENT,
     id_categoria INT(11) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE USUARIO (
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- 4. Criação da tabela SERVICO (Depende de USUARIO via id_ofertante)
+-- 4. Criação da tabela SERVICO
 CREATE TABLE SERVICO (
     id_servico INT(11) NOT NULL AUTO_INCREMENT,
     id_ofertante INT(11) NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE SERVICO (
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- 5. Criação da tabela NOTIFICACAO (Depende de USUARIO)
+-- 5. Criação da tabela NOTIFICACAO
 CREATE TABLE NOTIFICACAO (
     id_notificacao INT(11) NOT NULL AUTO_INCREMENT,
     id_usuario INT(11) NOT NULL,
@@ -81,7 +81,7 @@ CREATE TABLE NOTIFICACAO (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- 6. Criação da tabela PARTICIPACAO (Tabela pivô - Depende de USUARIO e SERVICO)
+-- 6. Criação da tabela PARTICIPACAO
 CREATE TABLE PARTICIPACAO (
     id_participacao INT(11) NOT NULL AUTO_INCREMENT,
     id_usuario INT(11) NOT NULL,

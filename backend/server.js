@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Configuração do Multer
+// Multer config
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'uploads/');
@@ -24,21 +24,25 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// User sign up / Cadastro de usuários
+//////////
+// USER //
+//////////
+
+// User sign up
 app.post('/usuarios', async (req, res) => {
     const { id_categoria, nome, email, senha, data_nascimento, tipo_usuario, cidade, bairro, foto_perfil, genero, nome_exibicao } = req.body;
 
-    // Username gen / Geração do username
+    // Username gen
     let username = null;
     if (nome) {
         username = nome
         .trim()
-        .normalize(`NFD`)                // Breaks down accents     / Desmembra acentos
-        .replace(/[\u0300-\u036f]/g, '') // Remove isolated accents / Remove acentos isolados
-        .toLowerCase()                   // Lowercase               / Minúsculo
-        .split(/\s+/)                    // Divide by whitespace    / Divide por espaços em branco
-        .slice(0, 2)                     // First 2 words           / Duas primeiras palavras
-        .join('');                       // Remove spaces           / Tira os espaços
+        .normalize(`NFD`)                // Breaks down accents     
+        .replace(/[\u0300-\u036f]/g, '') // Remove isolated accents 
+        .toLowerCase()                   // Lowercase               
+        .split(/\s+/)                    // Divide by whitespace    
+        .slice(0, 2)                     // First 2 words           
+        .join('');                       // Remove spaces           
     }
 
     const sql = `
@@ -106,7 +110,7 @@ app.get('/usuarios', (req, res) => {
     });
 });
 
-// User login / Login de usuários
+// User login 
 app.post(`/login`, (req, res) => {
     const { email, senha } = req.body;
 
@@ -154,7 +158,7 @@ app.post(`/login`, (req, res) => {
     });
 });
 
-// Get user data / Buscar dados do usuário (EditProfile)
+// Get user data (EditProfile)
 app.get('/usuarios/:id', (req, res) => {
     const { id } = req.params;
     const sql = `SELECT * FROM USUARIO WHERE id_usuario = ?`;
@@ -177,10 +181,10 @@ app.get('/usuarios/:id', (req, res) => {
     });
 });
 
-// Update user data / Atualizar dados do usuário (EditProfile)
+// Update user data (EditProfile)
 app.put('/usuarios/:id', upload.single('foto_perfil'), (req, res) => {
     const { id } = req.params;
-    const { nome, nome_exibicao, genero, cidade, bairro, foto_perfil_atual } = req.body;
+    const { nome_exibicao, genero, cidade, bairro, foto_perfil_atual } = req.body;
 
     let picPath = foto_perfil_atual || null;
 
@@ -190,13 +194,13 @@ app.put('/usuarios/:id', upload.single('foto_perfil'), (req, res) => {
 
     const sql = `
         UPDATE USUARIO
-        SET nome = ?, nome_exibicao = ?, genero = ?, cidade = ?, bairro = ?, foto_perfil = ?
+        SET nome_exibicao = ?, genero = ?, cidade = ?, bairro = ?, foto_perfil = ?
         WHERE id_usuario = ?
     `;
 
     connection.query(
         sql,
-        [nome, nome_exibicao, genero, cidade, bairro, picPath, id],
+        [ nome_exibicao, genero, cidade, bairro, picPath, id],
         (erro, resultado) => {
             if (erro) {
                 console.log(`Erro ao atualizar usuário: ${erro.message}`);
@@ -211,6 +215,38 @@ app.put('/usuarios/:id', upload.single('foto_perfil'), (req, res) => {
         }
     )
 })
+
+// Update user data (EditAccount)
+app.put('/usuarios/:id/conta', async (req, res) => {
+    const { id } = req.params;
+    const { name, email, password } = req.body;
+
+    try {
+        if (password && password.trim() !== '') {
+            const encryptedPassword = await bcrypt.hash(password, 10);
+            const sql = `UPDATE USUARIO SET nome = ?, email = ?, senha = ? WHERE id_usuario = ?`;
+            connection.query(sql, [name, email, encryptedPassword, id], (erro) => {
+                if (erro) {
+                    console.log(erro);
+                    return res.status(500).json({ mensagem: 'Erro ao atualizar conta' });
+                }
+                res.json({ mensagem: 'Conta atualizada com sucesso' });
+            });
+        } else {
+            const sql = `UPDATE USUARIO SET nome = ?, email = ? WHERE id_usuario = ?`;
+            connection.query(sql, [name, email, id], (erro) => {
+                if (erro) {
+                    console.log(erro);
+                    return res.status(500).json({ mensagem: 'Erro ao atualizar conta' });
+                }
+                res.json({ mensagem: 'Conta atualizada com sucesso' });
+            });
+        }
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({ mensagem: 'Erro interno no servidor' });
+    }
+});
 
 ///////////
 // TASKS //
@@ -278,37 +314,71 @@ app.get('/servicos', (req, res) => {
     });
 });
 
-// Requet participation in a task
-app.post('/participantes', (req, res) => {
+// Requests participation in a task
+app.post('/participacoes', (req, res) => {
     const { id_usuario, id_servico } = req.body;
 
-    const sql = `
-        INSERT INTO PARTICIPACAO (id_usuario, id_servico, situacao, inscrito_em)
-        VALUES (?, ?, 'pendente', NOW())
-    `;
-
-    connection.query(sql, [id_usuario, id_servico], (erro, resultado) => {
-        if (erro) {
-            console.log(erro);
-            return res.status(500).json({ mensagem: 'Erro ao solicitar participação' })
+    const checkSql = `SELECT * FROM PARTICIPACAO WHERE id_usuario = ? AND id_servico = ?`;
+    connection.query(checkSql, [id_usuario, id_servico], (err, rows) => {
+        if (rows && rows.length > 0) {
+            return res.status(400).json({ mensagem: 'Você já solicitou participação neste serviço' })
         }
 
-        const sqlNotif = `
-            INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
-            SELECT id_ofertante, 'Novo pedido de participação no seu serviço!', NOW()
-            FROM SERVICO WHERE id_servico = ?
+        const sql = `
+            INSERT INTO PARTICIPACAO (id_usuario, id_servico, situacao, inscrito_em)
+            VALUES (?, ?, 'pendente', NOW())
         `;
-        connection.query(sqlNotif, [id_servico]);
 
-        res.json({ mensagem: 'Solicitação enviada com sucesso!' })
+        connection.query(sql, [id_usuario, id_servico], (erro, resultado) => {
+            if (erro) {
+                console.log(erro);
+                return res.status(500).json({ mensagem: 'Erro ao solicitar participação' })
+            }
+
+            const sqlNotif = `
+                INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
+                SELECT id_ofertante, 'Novo pedido de participação em seu serviço.', NOW()
+                FROM SERVICO WHERE id_servico = ?
+            `;
+            connection.query(sqlNotif, [id_servico]);
+
+            res.json({ mensagem: 'Solicitação enviada com sucesso!' });
+        });
     });
 });
 
-// Cancel participation/request
+// Lists subscribed/pending
+app.get('/servicos/:id/participacoes', (req, res) => {
+    const { id } = req.params;
+    const sql = `
+        SELECT
+            p.id_participacao,
+            p.situacao,
+            p.inscrito_em,
+            u.id_usuario,
+            u.nome,
+            u.nome_exibicao,
+            u.foto_perfil
+        FROM PARTICIPACAO p
+        JOIN USUARIO u ON p.id_usuario = u.id_usuario
+        WHERE p.id_servico = ?
+        ORDER BY FIELD(p.situacao, 'pendente', 'aprovado', 'recusado'), p.inscrito_em ASC
+    `;
+
+    connection.query(sql, [id], (erro, resultados) => {
+        if (erro) {
+            console.log(erro);
+            return res.status(500).json({ mensagem: 'Erro ao buscar participantes' });
+        }
+        res.json(resultados);
+    });
+});
+
+// Cancels participation/request
 app.delete('/participacoes', (req, res) => {
     const { id_usuario, id_servico } = req.body;
 
-    const sql = `DELETE FROM PARTICIPACAO WHERE id_usuario = ? AND id_servico = ?`;
+    const sql = `UPDATE PARTICIPACAO SET situacao = 'cancelado' WHERE id_usuario = ? AND id_servico = ?`;
 
     connection.query(sql, [id_usuario, id_servico], (erro, resultado) => {
         if (erro) {
@@ -329,6 +399,34 @@ app.put('/participacoes/status', (req, res) => {
             return res.status(500).json({ mensagem: 'Erro ao atualizar situação' });
         }
         res.json({ mensagem: `Status atualizado para ${nova_situacao}` });
+    });
+});
+
+// Remove participant w/ reason
+app.put('/participacoes/remover', (req, res) => {
+    const { id_participacao, justificativa } = req.body;
+
+    if (!justificativa || justificativa.trim() === '') {
+        return res.status(400).json({ mensagem: 'A justificativa é obrigatória.' })
+    }
+
+    const sql = `UPDATE PARTICIPACAO SET situacao = 'removido' WHERE id_participacao = ?`;
+
+    connection.query(sql, [id_participacao], (erro) => {
+        if (erro) {
+            return res.status(500).json({ mensagem: 'Erro ao remover participante.' });
+        }
+        
+        const sqlNotif = `
+            INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
+            SELECT p.id_usuario, CONCAT('Você foi removido do serviço "', s.titulo, '". Motivo: ', ?), NOW()
+            FROM PARTICIPACAO p
+            JOIN SERVICO s ON p.id_servico = s.id_servico
+            WHERE p.id_participacao = ?
+        `;
+        connection.query(sqlNotif, [justificativa.trim(), id_participacao]);
+
+        res.json({ mensagem: 'Participante removido com sucesso.' });
     });
 });
 

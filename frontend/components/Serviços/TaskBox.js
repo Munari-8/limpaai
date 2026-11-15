@@ -8,7 +8,7 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Colors, Fonts } from "../Theme";
 import TaskPopUp from "./TaskPopUp";
 
-// Format date
+// Formats date
 const formatDateToBR = (dateString) => {
     if (!dateString) return '';
     const cleanDate = dateString.split('T')[0];
@@ -21,12 +21,12 @@ const formatDateToBR = (dateString) => {
 };
 
 export default function TaskBox({
-    taskType, name, description, date, showDate = true, startTime, endTime, address, image,
-    registeredPeople = 0, personLimit = 0, username, showDateTag = false, ...props
+    taskType, name, description, date, showDate = true, startTime, endTime, address, latitude, longitude, idOfertante,
+    imagens, image, registeredPeople = 0, personLimit = 0, username, showDateTag = false, ...props
 }) {
     const normalizedType = taskType ? taskType.toLowerCase() : '';
 
-    // Set icon
+    // Sets icon
     const iconMapping = {
         animais: 'paw',
         hortas: 'leaf',
@@ -35,7 +35,7 @@ export default function TaskBox({
     
     const baseIcon = iconMapping[normalizedType] || 'alert';
 
-    // Set avatar
+    // Sets avatar
     const avatarPlaceholderMapping = {
         animais: require('../../assets/person/personAnimais.svg'),
         hortas: require('../../assets/person/personHortas.svg'),
@@ -44,7 +44,7 @@ export default function TaskBox({
 
     const avatarPlaceholder = avatarPlaceholderMapping[taskType];
 
-    // Set color
+    // Sets color
     const bgColorMapping = {
         animais: Colors.animais,
         hortas: Colors.hortas,
@@ -57,7 +57,7 @@ export default function TaskBox({
 
     const taskName = name ? name.toUpperCase() : '';
 
-    // Format date
+    // Formats date
     const formattedDate = formatDateToBR(date);
 
     // TaskPopUp control
@@ -67,7 +67,7 @@ export default function TaskBox({
     const formattedStartTime = startTime ? startTime.slice(0, 5) : '';
     const formattedEndTime = endTime ? endTime.slice(0,5) : '';
 
-    // Format time 2 display
+    // Formats time 2 display
     const timeDisplay = formattedEndTime && formattedEndTime !== formattedStartTime
         ? `${formattedStartTime} - ${formattedEndTime}`
         : formattedStartTime;
@@ -97,10 +97,16 @@ export default function TaskBox({
                 startTime={formattedStartTime}
                 endTime={formattedEndTime}
                 address={address}
+                latitude={latitude}
+                longitude={longitude}
                 image={parsedImages}
                 personCount={personCount}
                 username={username}
+                idOfertante={idOfertante}
                 avatarPlaceholder={avatarPlaceholder}
+                idServico={props.idServico}
+                minhaSituacao={props.minhaSituacao}
+                onRefresh={props.onRefresh}
             />
 
             {showDateTag && (
@@ -112,7 +118,7 @@ export default function TaskBox({
                     <View style={styles.textContainer}>
                         <Text
                             style={styles.text1}
-                            numberOfLines={1}
+                            numberOfLines={2}
                             ellipsizeMode="tail"
                         >{taskName}</Text>
                         
@@ -144,7 +150,7 @@ export default function TaskBox({
                                 color={Colors.white}
                             />
 
-                            <Text style={styles.text2} numberOfLines={2} ellipsizeMode="tail">{address}</Text>
+                            <Text style={styles.text2} numberOfLines={1} ellipsizeMode="tail">{address}</Text>
                         </View>
                         
                         <View style={styles.centerProps}>
@@ -179,7 +185,9 @@ const styles = StyleSheet.create({
     text1: {
         fontFamily: Fonts.condensedBlack,
         fontSize: 24,
-        color: Colors.white
+        color: Colors.white,
+
+        paddingBottom: '2%'
     },
     text2: {
         fontFamily: Fonts.medium,
@@ -198,6 +206,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
 
-        gap: '3%'
+        gap: '2%'
     }
-})
+});

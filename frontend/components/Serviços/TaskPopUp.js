@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-    StyleSheet, View, Text, TouchableOpacity, Modal,
-    TouchableWithoutFeedback, FlatList, Dimensions, ScrollView,
-    Alert
+    StyleSheet, View, Text, TouchableOpacity, Modal, TouchableWithoutFeedback,
+    FlatList, Dimensions, ScrollView, Alert, Platform, Linking
 } from "react-native";
+import { WebView } from "react-native-webview";
 
 // Expo
 import { Image } from "expo-image";
@@ -13,20 +13,96 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { Colors, Fonts } from "../Theme";
 import Button from "../Button";
 import TaskCancelPopUp from "./TaskCancelPopUp";
+import TaskRemoveUserPopUp from "./TaskRemoveUserPopUp";
 import { API_URL } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function TaskPopUp({
-    visible, onClose, lightColor, color, taskIcon, name, description, date, startTime, endTime,
-    address, image, personCount, username, avatar, avatarPlaceholder, idServico, minhaSituacao, onRefresh
+    visible, onClose, lightColor, color, taskIcon, name, description, date, startTime, endTime, address,
+    latitude, longitude, image, personCount, username, avatar, avatarPlaceholder, idServico, idOfertante, minhaSituacao, onRefresh
 }){
-    const { user } = useAuth;
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
 
-    // TaskCancelPopUp control / Controle do TaskCancelPopUp
-    const [ isCancelModalOpen, setIsCancelModalOpen ] = useState(false);
+    // TaskCancelPopUp control
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [userToRemove, setUserToRemove] = useState(null);
+
+    const handleRemoveParticipant = async (reason) => {
+        if (!userToRemove) return;
+        try {
+            setLoading(true);
+            const response = await fetch(`${API_URL}/participacoes/remover`, {
+                method: 'PUT',
+                headers: { 'Content-Type' : 'application/json' },
+                body: JSON.stringify({
+                    id_participacao: userToRemove.id_participacao,
+                    justificativa: reason
+                })
+            });
+
+            if (response.ok) {
+                Alert.alert("Sucesso", 'Participante removido e notificado.');
+                setUserToRemove(null);
+                loadParticipations();
+                if (onRefresh) onRefresh();
+            } else {
+                const data = await response.json();
+                Alert.alert('Erro', data.mensagem || 'Não foi possível remover.');
+            }
+        } catch (error) {
+            Alert.alert('Erro de conexão', 'Não foi possível contatar o servidor.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const isOwner = String(user?.id) === String(idOfertante);
+    const [participations, setParticipations] = useState([]);
+
+    const loadParticipations = async () => {
+        if (!visible || !isOwner || !idServico) return;
+        try {
+            const response = await fetch(`${API_URL}/servicos/${idServico}/participacoes`);
+            const data = await response.json();
+            if (response.ok) {
+                setParticipations(data);
+            }
+        } catch (error) {
+            console.log('Erro ao carregar solicitações:', error);
+        }
+    };
+
+    useEffect(() => {
+        loadParticipations();
+    }, [visible, idServico]);
+
+    const handleRespondRequest = async (id_participacao, nova_situacao) => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${API_URL}/participacoes/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_participacao,
+                    nova_situacao
+                })
+            });
+
+            if (response.ok) {
+                loadParticipations();
+                if (onRefresh) onRefresh();
+            } else {
+                Alert.alert("Erro", "Não foi possível realizar a solicitação.");
+            }
+        } catch (error) {
+            Alert.alert("Erro de conexão", "Não foi possível contatar o servidor.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleCancelParticipation = async () => {
         try {
@@ -62,6 +138,7 @@ export default function TaskPopUp({
     const handleRequestParticipation = async () => {
         try {
             setLoading(true);
+
             const response = await fetch(`${API_URL}/participacoes`, {
                 method: 'POST',
                 headers: {
@@ -90,17 +167,51 @@ export default function TaskPopUp({
         }
     };
     
-    const fullTime = `${startTime}\n${endTime}`;
+    const fullTime =  startTime && endTime && endTime !== startTime ? `${startTime}\n${endTime}` : startTime;
 
     // Image control
     const [activeIndex, setActiveIndex] = useState(null);
-    const [imageSize, setImageSize] = useState({})
+    const [imageSize, setImageSize] = useState({});
 
-    const images = [
-        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMLLIm-K9jJ8xaJ0GZXNfbfs5CwtanGKzXbDzQGoK1hzK7dUPU9TnOHvE&s=10',
-        'https://cloudfront-us-east-1.images.arcpublishing.com/estadao/THWRKLGVOVEZVC5D4Q3UD2K3VM.jpg',
-        'https://futebolatino.com.br/wp-content/uploads/2023/11/Suarez-Gremio.jpg'
-    ];
+    const imageList = Array.isArray(image) ? image : (image ? [image] : []);
+    const formatUri = (uri) => (uri && (uri.startsWith('http') || uri.startsWith('file://'))) ?  uri : `${API_URL}${uri}`;
+    const images = imageList.map(formatUri);
+
+    // Map view ctrl
+    const [isMapVisible, setIsMapVisible] = useState(false);
+
+    const hasCoords = latitude !== null && latitude !== undefined && longitude !== null && longitude !== undefined;
+
+    const viewMapHTML = hasCoords ? `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <style>body, html, #map { height: 100%; margin: 0; padding: 0; }</style>
+        </head>
+        <body>
+            <div id="map"></div>
+            <script>
+                var map = L.map('map').setView([${latitude}, ${longitude}], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+                L.marker([${latitude}, ${longitude}]).addTo(map)
+                    .bindPopup("<b>${name}</b><br>${address}")
+                    .openPopup();
+            </script>
+        </body>
+        </html>
+    ` : '';
+
+    const openExternalMap = () => {
+        if (!hasCoords) return;
+        const url = Platform.select({
+            ios: `maps:0,0?q=${name}@${latitude},${longitude}`,
+            android: `geo:0,0?q=${latitude},${longitude}(${name})`,
+            default: `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=16/${latitude}/${longitude}`
+        });Linking.openURL(url);
+    };
 
     return (
         <>
@@ -115,6 +226,14 @@ export default function TaskPopUp({
                 onClose={() => setIsCancelModalOpen(false)}
                 name={name}
                 onConfirm={handleCancelParticipation}
+            />
+
+            <TaskRemoveUserPopUp
+                visible={!!userToRemove}
+                onClose={() => setUserToRemove(null)}
+                userName={userToRemove ? (userToRemove.nome_exibicao || userToRemove.nome) : ''}
+                onConfirm={handleRemoveParticipant}
+                loading={loading}
             />
             
             <View style={styles.bgShadow}>
@@ -182,50 +301,120 @@ export default function TaskPopUp({
                                 </View>
 
                                 <Text style={styles.subText}>{address}</Text>
-                            </View>
 
-                            <View style={styles.imageView}>
+                                {hasCoords && (
                                 <TouchableOpacity
-                                    style={{ width: '66.66%', aspectRatio: 1 }}
-                                    onPress={() => setActiveIndex(0)}
-                                >
-                                    <Image
-                                        source={images[0]}
-                                        placeholder={require('../../assets/brokenImage200.svg')}
-                                        style={{ width: '100%', height: '100%' }}
-                                        contentFit='cover'
-                                        placeholderContentFit="cover"
-                                    />
-                                </TouchableOpacity>
-
-                                <View style={{ width: '33.33%' }}>
-                                    <TouchableOpacity
-                                        style={{ width: '100%', aspectRatio: 1 }}
-                                        onPress={() => setActiveIndex(1)}
+                                        style={[styles.mapButton, { borderColor: color }]}
+                                        onPress={() => setIsMapVisible(true)}
+                                        activeOpacity={0.7}
                                     >
-                                        <Image
-                                            source={images[1]}
-                                            placeholder={require('../../assets/brokenImage400.svg')}
-                                            style={{ width: '100%', height: '100%' }}
-                                            contentFit='cover'
-                                            placeholderContentFit="cover"
-                                        />
+                                        <Text style={[styles.mapButtonText, { color: color }]}>Visualizar no mapa</Text>
                                     </TouchableOpacity>
-
-                                    <TouchableOpacity
-                                        style={{ width: '100%', aspectRatio: 1 }}
-                                        onPress={() => setActiveIndex(2)}
-                                    >
-                                        <Image
-                                            source={images[2]}
-                                            placeholder={require('../../assets/brokenImage400.svg')}
-                                            style={{ width: '100%', height: '100%' }}
-                                            contentFit='cover'
-                                            placeholderContentFit="cover"
-                                        />
-                                    </TouchableOpacity>
-                                </View>
+                                )}
                             </View>
+
+                            {images.length > 0 && (
+                                <View style={{ width: '100%', marginBottom: '4%' }}>
+                                    {images.length === 1 && (
+                                        <TouchableOpacity
+                                            style={{ width: '100%', height: 200, borderRadius: 16, overflow: 'hidden' }}
+                                            onPress={() => setActiveIndex(0)}
+                                        >
+                                            <Image
+                                                source={{ uri: images[0] }}
+                                                placeholder={require('../../assets/brokenImage200.svg')}
+                                                style={{ width: '100%', height: '100%' }}
+                                                contentFit='cover'
+                                            />
+                                        </TouchableOpacity>
+                                    )}
+
+                                    {images.length === 2 && (
+                                        <View style={{ flexDirection: 'row', width: '100%', height: 160, borderRadius: 16, overflow: 'hidden' }}>
+                                            {images.map((uri, idx) => (
+                                                <TouchableOpacity
+                                                    key={idx}
+                                                    style={{ flex: 1, height: '100%' }}
+                                                    onPress={() => setActiveIndex(idx)}
+                                                >
+                                                    <Image
+                                                        source={{ uri }}
+                                                        placeholder={require('../../assets/brokenImage200.svg')}
+                                                        style={{ width: '100%', height: '100%' }}
+                                                        contentFit='cover'
+                                                    />
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
+                                    )}
+
+                                    {images.length === 3 && (
+                                        <View style={[styles.imageView, { borderRadius: 16, overflow: 'hidden' }]}>
+                                            <TouchableOpacity
+                                                style={{ width: '66.66%', aspectRatio: 1 }}
+                                                onPress={() => setActiveIndex(0)}
+                                            >
+                                                <Image
+                                                    source={{ uri: images[0] }}
+                                                    placeholder={require('../../assets/brokenImage200.svg')}
+                                                    style={{ width: '100%', height: '100%' }}
+                                                    contentFit='cover'
+                                                />
+                                            </TouchableOpacity>
+
+                                            <View style={{ width: '33.33%' }}>
+                                                <TouchableOpacity
+                                                    style={{ width: '100%', aspectRatio: 1 }}
+                                                    onPress={() => setActiveIndex(1)}
+                                                >
+                                                    <Image
+                                                        source={{ uri: images[1] }}
+                                                        placeholder={require('../../assets/brokenImage400.svg')}
+                                                        style={{ width: '100%', height: '100%' }}
+                                                        contentFit='cover'
+                                                    />
+                                                </TouchableOpacity>
+
+                                                <TouchableOpacity
+                                                    style={{ width: '100%', aspectRatio: 1 }}
+                                                    onPress={() => setActiveIndex(2)}
+                                                >
+                                                    <Image
+                                                        source={{ uri: images[2] }}
+                                                        placeholder={require('../../assets/brokenImage400.svg')}
+                                                        style={{ width: '100%', height: '100%' }}
+                                                        contentFit='cover'
+                                                    />
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    )}
+
+                                    {images.length >= 4 && (
+                                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', width: '100%', borderRadius: 16, overflow: 'hidden' }}>
+                                            {images.slice(0, 4).map((uri, idx) => (
+                                                <TouchableOpacity
+                                                    key={idx}
+                                                    style={{ width: '48.5%', aspectRatio: 1, position: 'relative' }}
+                                                    onPress={() => setActiveIndex(idx)}
+                                                >
+                                                    <Image
+                                                        source={{ uri }}
+                                                        placeholder={require('../../assets/brokenImage200.svg')}
+                                                        style={{ width: '100%', height: '100%' }}
+                                                        contentFit='cover'
+                                                    />
+                                                    {idx === 3 && images.length > 4 && (
+                                                        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' }}>
+                                                            <Text style={{ color: '#fff', fontFamily: Fonts.bold, fontSize: 18 }}>+{images.length - 4}</Text>
+                                                        </View>
+                                                    )}
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
+                                    )}
+                                </View>
+                            )}
 
                             <View style={[styles.info, { marginTop: '4%' }]}>
                                 <View style={styles.tag}>
@@ -254,49 +443,141 @@ export default function TaskPopUp({
                                 </View>
                             </View>
                             
-                            {minhaSituacao === 'aprovado' && (
-                                <View style={[styles.tag, { marginTop: '4%' }]}>
-                                    <Button
-                                        text={loading ? 'Carregando...' : 'Cancelar Participação'}
-                                        color={color}
-                                        flex={true}
-                                        onPress={() => setIsCancelModalOpen(true)}
-                                        disabled={loading}
-                                    />
-                                    <TouchableOpacity>
-                                        <MaterialCommunityIcons name='message-text' size={40} color={color} />
-                                    </TouchableOpacity>
-                                </View>
-                            )}
 
-                            {minhaSituacao === 'pendente' && (
-                                <View style={[styles.tag, { marginTop: '4%' }]}>
-                                    <Button
-                                        text={loading ? 'Carregando...' : 'Solicitação Pendente (Cancelar)'}
-                                        color={Colors.naoReciclavel || '#FF5733'}
-                                        flex={true}
-                                        onPress={() => setIsCancelModalOpen(true)}
-                                        disabled={loading}
-                                    />
-                                    <TouchableOpacity>
-                                        <MaterialCommunityIcons name='message-text' size={40} color={color} />
-                                    </TouchableOpacity>
-                                </View>
-                            )}
+                            {isOwner ? (
+                                <View style={{ width: '100%', marginTop: '4%' }}>
+                                    {participations.filter(p => p.situacao === 'pendente' || p.situacao === 'aprovado').length > 0 && (
+                                        <View style={styles.requestsBox}>
+                                            <Text style={[styles.tagText, { color: color, marginBottom: 8 }]}>
+                                                Gerenciar Participantes:
+                                            </Text>
 
-                            {!minhaSituacao && (
-                                <View style={[styles.tag, { marginTop: '4%' }]}>
-                                    <Button
-                                        text={loading ? 'Carregando...' : 'Pedir para Participar'}
-                                        color={color}
-                                        flex={true}
-                                        onPress={handleRequestParticipation}
-                                        disabled={loading}
-                                    />
-                                    <TouchableOpacity>
-                                        <MaterialCommunityIcons name='message-text' size={40} color={color} />
-                                    </TouchableOpacity>
+                                            {participations
+                                                .filter(p => p.situacao === 'pendente' || p.situacao === 'aprovado')
+                                                .map((item) => (
+                                                    <View key={item.id_participacao} style={styles.requestRow}>
+                                                        <View style={{ flex: 1 }}>
+                                                            <Text style={styles.requestName}>
+                                                                {item.nome_exibicao || item.nome}
+                                                            </Text>
+                                                            <Text style={styles.requestStatus}>
+                                                                {item.situacao === 'pendente' ? 'Aguardando aprovação' : 'Confirmado'}
+                                                            </Text>
+                                                        </View>
+
+                                                        {item.situacao === 'pendente' ? (
+                                                            <View style={{ flexDirection: 'row', gap: 8 }}>
+                                                                <TouchableOpacity
+                                                                    style={[styles.actionBadge, { backgroundColor: Colors.greenLA1 }]}
+                                                                    onPress={() => handleRespondRequest(item.id_participacao, 'aprovado')}
+                                                                    disabled={loading}
+                                                                >
+                                                                    <MaterialIcons name="check" size={20} color="#fff" />
+                                                                </TouchableOpacity>
+
+                                                                <TouchableOpacity
+                                                                    style={[styles.actionBadge, { backgroundColor: Colors.plastico }]}
+                                                                    onPress={() => handleRespondRequest(item.id_participacao, 'recusado')}
+                                                                    disabled={loading}
+                                                                >
+                                                                    <MaterialIcons name="close" size={20} color="#fff" />
+                                                                </TouchableOpacity>
+                                                            </View>
+                                                        ) : (
+                                                            <TouchableOpacity
+                                                                style={[styles.actionBadge, { backgroundColor: Colors.plastico || '#E53935' }]}
+                                                                onPress={() => setUserToRemove(item)}
+                                                                disabled={loading}
+                                                            >
+                                                                <MaterialIcons name="person-remove" size={20} color="#fff" />
+                                                            </TouchableOpacity>
+                                                        )}
+                                                    </View>
+                                                ))}
+                                        </View>
+                                    )}
+
+                                    <View style={[styles.tag, { marginTop: 12 }]}>
+                                        <Button
+                                            text={loading ? 'Carregando...' : 'Editar Serviço'}
+                                            color={color}
+                                            flex={true}
+                                            onPress={() => {
+                                                Alert.alert("Editar", "Funcionalidade de edição em breve!");
+                                            }}
+                                            disabled={loading}
+                                        />
+                                    </View>
                                 </View>
+                            ) : (
+                                <>
+                                    {minhaSituacao === 'aprovado' && (
+                                        <View style={[styles.tag, { marginTop: '4%' }]}>
+                                            <Button
+                                                text={loading ? 'Carregando' : 'Cancelar Participação'}
+                                                color={color}
+                                                flex={true}
+                                                onPress={() => setIsCancelModalOpen(true)}
+                                                disabled={loading}
+                                            />
+                                            <TouchableOpacity>
+                                                <MaterialCommunityIcons name="message-text" size={40} color={color} />
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+
+                                    {minhaSituacao === 'pendente' && (
+                                        <View style={[styles.tag, { marginTop: '4%' }]}>
+                                            <Button
+                                                text={loading ? "Carregando..." : 'Solicitação Pendente (Cancelar)'}
+                                                color={Colors.plastico}
+                                                flex={true}
+                                                onPress={() => setIsCancelModalOpen(true)}
+                                                disabled={loading}
+                                            />
+                                            <TouchableOpacity>
+                                                <MaterialCommunityIcons name="message-text" size={40} color={color} />
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+
+                                    {(minhaSituacao === 'cancelado' || minhaSituacao === 'removido' || minhaSituacao === 'recusado') && (
+                                        <View style={styles.blockedStatusBox}>
+                                            <MaterialIcons
+                                                name="block"
+                                                size={24}
+                                                color={minhaSituacao === 'cancelado' ? Colors.b50 : (Colors.b50)}
+                                            />
+                                            <Text
+                                                style={[
+                                                    styles.blockedStatusText,
+                                                    { color: minhaSituacao === 'cancelado' ? Colors.b50 : (Colors.b50) }
+                                                ]}
+                                            >
+                                                {minhaSituacao === 'cancelado'
+                                                    ? 'Você cancelou sua participação neste serviço'
+                                                    : minhaSituacao === 'removido'
+                                                    ? 'Você foi removido pelo organizador'
+                                                    : 'Sua solicitação foi recusada pelo organizador'}
+                                            </Text>
+                                        </View>
+                                    )}
+
+                                    {!minhaSituacao && (
+                                        <View style={[styles.tag, { marginTop: '4%' }]}>
+                                            <Button
+                                                text={loading ? "Carregando..." : 'Pedir para Participar'}
+                                                color={color}
+                                                flex={true}
+                                                onPress={handleRequestParticipation}
+                                                disabled={loading}
+                                            />
+                                            <TouchableOpacity>
+                                                <MaterialCommunityIcons name="message-text" size={40} color={color} />
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                </>
                             )}
                         </ScrollView>
                     </View>
@@ -339,7 +620,7 @@ export default function TaskPopUp({
                                     <TouchableWithoutFeedback onPress={() => {}}>
                                         <View style={boxStyle}>
                                             <Image
-                                                source={item}
+                                                source={{ uri: item }}
                                                 style={{ width: '100%', height: '100%' }}
                                                 contentFit="contain"
                                                 onLoad={(event) => {
@@ -360,6 +641,44 @@ export default function TaskPopUp({
                         );
                     }}
                 />
+            </View>
+        </Modal>
+
+        <Modal
+            visible={isMapVisible}
+            animationType="slide"
+            onRequestClose={() => setIsMapVisible(false)}
+        >
+            <View style={{ flex: 1, backgroundColor: Colors.background }}>
+                {Platform.OS !== 'web'? (
+                    <WebView
+                        originWhitelist={['*']}
+                        source={{ html: viewMapHTML }}
+                        style={{ flex: 1 }}
+                    />
+                ) : (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text>Mapa interativo disponível no mobile.</Text>
+                    </View>
+                )}
+
+                <View style={styles.mapModalFooter}>
+                    <Text style={styles.subText} numberOfLines={2}>{address}</Text>
+                    <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
+                        <Button
+                            text="Abrir no GPS"
+                            color={color}
+                            flex={true}
+                            onPress={openExternalMap}
+                        />
+                        <Button
+                            text="Fechar"
+                            color={Colors.b50}
+                            flex={true}
+                            onPress={() => setIsMapVisible(false)}
+                        />
+                    </View>
+                </View>
             </View>
         </Modal>
         </>
@@ -432,6 +751,83 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
 
+    // Map
+    mapButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: '2%',
+        paddingVertical: '2%',
+        paddingHorizontal: '4%',
+
+        marginTop: 8,
+        alignSelf: 'flex-start',
+
+        borderRadius: 16,
+        borderWidth: 1.5
+    },
+    mapModalFooter: {
+        elevation: 5,
+        position: 'absolute',
+        bottom: 24,
+        left: 16,
+        right: 16,
+
+        backgroundColor: Colors.background,
+        borderRadius: 16,
+
+        padding: 16,
+        gap: 12
+    },
+
+    // Request
+    requestsBox: {
+        width: '100%',
+        backgroundColor: Colors.formInputBg,
+        borderRadius: 16,
+
+        padding: 12
+    },
+    requestRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 8,
+
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.b10 || '#e0e0e0'
+    },
+    requestName: {
+        fontFamily: Fonts.bold,
+        fontSize: 15,
+        color: Colors.black
+    },
+    requestStatus: {
+        fontFamily: Fonts.regular,
+        fontSize: 12,
+        color: Colors.b50
+    },
+    actionBadge: {
+        width: 34,
+        height: 34,
+        borderRadius: 17,
+
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    blockedStatusBox: {
+        width: '100%',
+        borderRadius: 100,
+        borderWidth: 2,
+        borderColor: Colors.b50,
+
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        marginTop: '4%',
+        padding: 8
+    },
+
     // Text
     taskName: {
         fontFamily: Fonts.condensedBlack,
@@ -450,11 +846,22 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.bold,
         fontSize: 16
     },
+    mapButtonText: {
+        fontFamily: Fonts.bold,
+        fontSize: 14
+    },
 
-    // Imagem
+    // Img
     avatar: {
         width: 40,
         height: 40,
         borderRadius: 100,
+    },
+    blockedStatusText: {
+        fontFamily: Fonts.bold,
+        fontSize: 14,
+
+        textAlign: 'center',
+        flexShrink: 1
     }
 })

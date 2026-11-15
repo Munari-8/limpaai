@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, View, Alert, Text } from "react-native";
+import { StyleSheet, View, Alert, Text, Platform } from "react-native";
 
 // Expo
 import { Image } from "expo-image";
 import * as ImagePicker from 'expo-image-picker';
+import { File } from "expo-file-system";
 
 // Local
 import { Colors, Fonts } from "../components/Theme";
@@ -37,8 +38,8 @@ export default function EditProfile() {
     const userId = user?.id;
 
     const [profileImg, setProfileImg] = useState(null);
+    const [newImgUri, setNewImgUri] = useState(null);
     const [nomeExibicao, setNomeExibicao] = useState('');
-    const [nomeCompleto, setNomeCompleto] = useState('');
     const [gender, setGender] = useState();
     const [city, setCity] = useState(null);
     const [neighborhood, setNeighborhood] = useState(null);
@@ -51,7 +52,7 @@ export default function EditProfile() {
     const cityOptions = Object.keys(RS_DATA);
     const neighborhoodOptions = city ? RS_DATA[city] : [];
 
-    // Buscar os dados assim que a tela abre
+    // Gets data instantly
     useEffect(() => {
         const fetchUserData = async () => {
             if (!userId) return;
@@ -62,7 +63,6 @@ export default function EditProfile() {
 
                 if (response.ok) {
                     setNomeExibicao(data.nome_exibicao || '');
-                    setNomeCompleto(data.nome || '');
                     setGender(data.genero || null);
                     setCity(data.cidade || null);
                     setNeighborhood(data.bairro || null);
@@ -80,29 +80,29 @@ export default function EditProfile() {
         fetchUserData();
     }, [userId]);
 
-    // Enviar dados pro banco
+    // Send data 2 db
     const handleSave = async () => {
         try {
             const formData = new FormData();
 
-            formData.append('nome', nomeCompleto || '');
             formData.append('nome_exibicao', nomeExibicao || '');
             formData.append('genero', gender || '');
             formData.append('cidade', city || '');
             formData.append('bairro', neighborhood || '');
 
-            if (profileImg && profileImg.startsWith('file://')) {
-                const filename = profileImg.split('/').pop();
-                const match = /\.(\w+)$/.exec(filename);
-                const type = match ? `image/${match[1]}` : `image/jpeg`;
+            if (newImgUri) {
+                const filename = newImgUri.split('/').pop() || 'perfil.jpg';
 
-                formData.append('foto_perfil', {
-                    uri: profileImg,
-                    name: filename,
-                    type,
-                });
+                if (Platform.OS === 'web') {
+                    const blob = await (await fetch(newImgUri)).blob();
+                    formData.append('foto_perfil', blob, filename);
+                } else {
+                    formData.append('foto_perfil', new File(newImgUri));
+                }
             } else {
-                const relativePath = profileImg ? profileImg.replace(API_URL, '') : '';
+                const relativePath = profileImg && profileImg.startsWith(API_URL)
+                    ? profileImg.replace(API_URL, '')
+                    : '';
                 formData.append('foto_perfil_atual', relativePath);
             }
 
@@ -116,7 +116,6 @@ export default function EditProfile() {
                 const updatedData = await userResponse.json();
 
                 await updateUserContext({
-                    nome: updatedData.nome,
                     nome_exibicao: updatedData.nome_exibicao,
                     genero: updatedData.genero,
                     foto_perfil: updatedData.foto_perfil
@@ -130,7 +129,7 @@ export default function EditProfile() {
         }
     };
 
-    // Escolher imagem da galeria
+    // Picks img from gallery
     const handlePickImg = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -140,14 +139,15 @@ export default function EditProfile() {
         }
 
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.8,
         });
 
-        if (!result.canceled) {
+        if (!result.canceled && result.assets[0].uri) {
             setProfileImg(result.assets[0].uri);
+            setNewImgUri(result.assets[0].uri);
         }
     };
 
@@ -165,18 +165,13 @@ export default function EditProfile() {
                         onPress={handlePickImg}
                     />
 
+                    <View style={{ height: 24 }}/>
+
                     <Text style={styles.text1}>Nome de exibição</Text>
                     <FormInput
                         placeholder={`Digite um nome à ser exibido`}
                         value={nomeExibicao}
                         setValue={setNomeExibicao}
-                    />
-
-                    <Text style={styles.text1}>Nome completo</Text>
-                    <FormInput
-                        placeholder={`Digite seu nome completo`}
-                        value={nomeCompleto}
-                        setValue={setNomeCompleto}
                     />
 
                     <Text style={styles.text1}>Gênero</Text>
@@ -212,7 +207,7 @@ export default function EditProfile() {
                 <Button
                         text={`Salvar Mudanças`}
                         color={Colors.greenLA1}
-                        style={{ marginTop: `28%` }}
+                        style={{ marginTop: `10%` }}
                         onPress={handleSave}
                     />
             </View>
@@ -236,9 +231,9 @@ const styles = StyleSheet.create({
     },
     main: {
         width: '100%',
+
         alignItems: 'center',
         justifyContent: 'flex-start',
-        marginBottom: '5%'
     },
 
     // Text
@@ -250,4 +245,4 @@ const styles = StyleSheet.create({
         marginBottom: 4,
         marginTop: 6,
     }
-})
+});

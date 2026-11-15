@@ -1,19 +1,19 @@
-import React, { act } from 'react';
-import { StyleSheet, Platform, View } from 'react-native';
+import React from 'react';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 
 // React Navigation
 import { NavigationContainer, getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
-// Fontes
+// Fonts
 import { useFonts, Roboto_300Light, Roboto_400Regular, Roboto_500Medium, Roboto_700Bold} from '@expo-google-fonts/roboto';
 
 // Local
 import { Colors } from './components/Theme';
 import Panel from './components/Panel';
 import Header from './components/Header';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Screens
 import WelcomeScreen from './screens/auth/Welcome';
@@ -26,6 +26,8 @@ import PasswordRecoveryChangeScreen from './screens/passwordRecovery/PasswordRec
 
 import HomeScreen from './screens/Home';
 import EditProfile from './screens/EditProfile';
+import SettingsScreen from './screens/Settings';
+import EditAccount from './screens/EditAccount';
 
 import InboxScreen from './screens/Messages/Inbox';
 import ChatScreen from './screens/Messages/Chat';
@@ -47,21 +49,14 @@ const CatalogStack = createNativeStackNavigator();
 
 function CatalogStackNavigator() {
   return (
-    <CatalogStack.Navigator
-      screenOptions={{
-        headerShown: false
-      }}
-    >
+    <CatalogStack.Navigator screenOptions={{ headerShown: false }}>
       <CatalogStack.Screen name='MainCatalogoScreen' component={MainCatalogoScreen}/>
-
       <CatalogStack.Screen name='CatalogoDeResiduos' component={CatalogoDeResiduos}/>
-
       <CatalogStack.Screen name='YourSuggestions' component={YourSuggestionsScreen}/>
     </CatalogStack.Navigator>
   );
 }
 
-// Logado; App principal
 function MainAppTabs() {
   const headerTitles = {
     Home: 'Página Inicial',
@@ -77,40 +72,29 @@ function MainAppTabs() {
       <Tab.Navigator
         tabBar={(props) => {
           const route = props.state.routes[props.state.index];
-
           const nestedRouteName = getFocusedRouteNameFromRoute(route);
-
           const activeRouteName = nestedRouteName || route.name;
 
           return (
             <>
-              <Header txt={headerTitles[activeRouteName]}/>
+              <Header txt={headerTitles[activeRouteName]} navigation={props.navigation}/>
               <Panel {...props}/>
             </>
           );
         }}
-        screenOptions={{
-          swipeEnabled: true
-        }}
+        screenOptions={{ swipeEnabled: true }}
       >
         <Tab.Screen name='Home' component={HomeScreen}/>
-
         <Tab.Screen name='Inbox' component={InboxScreen}/>
-
         <Tab.Screen
           name='MainCatalogo'
           component={CatalogStackNavigator}
           options={({ route }) =>{
             const routeName = getFocusedRouteNameFromRoute(route);
-
-            if (routeName === 'CatalogoDeResiduos') {
-              return { swipeEnabled: false };
-            }
-
+            if (routeName === 'CatalogoDeResiduos') return { swipeEnabled: false };
             return { swipeEnabled: true }
-          }}  
+          }}
         />
-
         <Tab.Screen name='MainMural' component={MainMuralScreen}/>
       </Tab.Navigator>
     </View>
@@ -122,24 +106,98 @@ function CatalogoDeResiduos() {
     <View style={styles.container}>
       <Tab.Navigator
         tabBar={() => null}
-
         screenOptions={{
           swipeEnabled: true
         }}
       >
         <Tab.Screen name='Vidro' component={VidroScreen}/>
-
         <Tab.Screen name='Metal' component={MetalScreen}/>
-        
         <Tab.Screen name='Plastico' component={PlasticoScreen}/>
-        
         <Tab.Screen name='Papel' component={PapelScreen}/>
-
         <Tab.Screen name='Organico' component={OrganicoScreen}/>
-
         <Tab.Screen name='NaoReciclavel' component={NaoReciclavel}/>
       </Tab.Navigator>
     </View>
+  );
+}
+
+function NavigationRoot() {
+  const { signed, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }]}>
+        <ActivityIndicator size="large" color={Colors.greenLA1}/>
+      </View>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName={signed ? 'MainApp' : 'Welcome'}
+        screenOptions={{
+          headerShadowVisible: false,
+          headerTitle: '',
+          headerStyle: { backgroundColor: Colors.background }
+        }}
+      >
+        <Stack.Screen name='Welcome' component={WelcomeScreen} options={{ headerShown: false }}/>
+        <Stack.Screen name='SignUp' component={SignUpScreen}/>
+        <Stack.Screen name='Login' component={LoginScreen}/>
+
+        <Stack.Screen name='PasswordRecoveryEmail' component={PasswordRecoveryEmailScreen}/>
+        <Stack.Screen name='PasswordRecoveryCode' component={PasswordRecoveryCodeScreen}/>
+        <Stack.Screen name='PasswordRecoveryChange' component={PasswordRecoveryChangeScreen}/>
+
+        <Stack.Screen name='MainApp' component={MainAppTabs} options={{headerShown: false }}/>
+
+        <Stack.Screen name='Chat' component={ChatScreen} options={{ headerShown: false }}/>
+
+        <Stack.Screen name='CatalogoDeResiduos' component={CatalogoDeResiduos} options={{ headerShown: false }}/>
+
+        <Stack.Screen
+          name='Settings'
+          component={SettingsScreen}
+          options={{
+            headerShown: true,
+            headerTitle: 'Configurações',
+            headerTitleAlign: 'center',
+            headerTitleStyle: {
+              fontFamily: 'Roboto-Bold',
+              fontSize: 20
+            }
+          }}
+        />
+
+        <Stack.Screen
+          name='EditProfile'
+          component={EditProfile}
+          options={{
+            headerShown: true,
+            headerTitle: 'Editar perfil',
+            headerTitleAlign: 'center',
+            headerTitleStyle: {
+              fontFamily: 'Roboto-Bold',
+              fontSize: 20
+            }
+            }}
+        />
+
+        <Stack.Screen
+          name='EditAccount'
+          component={EditAccount}
+          options={{
+            headerShown: true,
+            headerTitle: 'Editar Conta',
+            headerTitleAlign: 'center',
+            headerTitleStyle: {
+              fontFamily: 'Roboto-Bold',
+              fontSize: 20 }
+          }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
@@ -153,70 +211,13 @@ export default function App() {
     'Roboto-Condensed-SemiBold': require('./assets/fonts/RobotoCondensed-SemiBold.ttf')
   });
   
-  // Se a fonte não carregar, não quebra o texto
-  if (!fontsLoaded) {
-    return null;
-  }
+  if (!fontsLoaded) return null;
 
   return (
     <AuthProvider>
-      <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{
-            headerShadowVisible: false,
-            headerTitle: '',
-            headerStyle: {
-              backgroundColor: Colors.background
-            }
-          }}
-        >
-          <Stack.Screen
-            name='Welcome'
-            component={WelcomeScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen name='SignUp' component={SignUpScreen}/>
-          <Stack.Screen name='Login' component={LoginScreen}/>
-
-          <Stack.Screen name='PasswordRecoveryEmail' component={PasswordRecoveryEmailScreen}/>
-          <Stack.Screen name='PasswordRecoveryCode' component={PasswordRecoveryCodeScreen}/>
-          <Stack.Screen name='PasswordRecoveryChange' component={PasswordRecoveryChangeScreen}/>
-
-          <Stack.Screen
-            name='MainApp'
-            component={MainAppTabs}
-            options={{headerShown: false }}
-          />
-
-          <Stack.Screen
-            name='Chat'
-            component={ChatScreen}
-            options={{ headerShown: false }}
-          />
-
-          <Stack.Screen
-            name='CatalogoDeResiduos'
-            component={CatalogoDeResiduos}
-            options={{ headerShown: false }}
-          />
-
-          <Stack.Screen
-            name='EditProfile'
-            component={EditProfile}
-            options={{
-              headerShown: true,
-              headerTitle: 'Editar perfil',
-              headerTitleAlign: 'center',
-              headerTitleStyle: {
-                fontFamily: 'Roboto-Bold',
-                fontSize: 20
-              }
-            }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <NavigationRoot/>
     </AuthProvider>
-    );
+  );
 }
 
 const styles = StyleSheet.create({

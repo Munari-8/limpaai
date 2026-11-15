@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { Alert, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import * as ImagePicker from 'expo-image-picker';
 import { WebView } from 'react-native-webview';
 
+// Expo
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { File } from 'expo-file-system'
+import * as ImagePicker from 'expo-image-picker';
+
 
 // Local
 import { Colors, Fonts } from "../Theme";
@@ -111,7 +113,7 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
         }
 
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             allowsMultipleSelection: true,
             selectionLimit: remainingSlots,
             quality: 0.8
@@ -228,6 +230,8 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
             formData.append('descricao', descricao);
             formData.append('taskType', taskType || 'Outros');
             formData.append('endereco', endereco);
+            formData.append('latitude', String(coords.lat));
+            formData.append('longitude', String(coords.lng));
             formData.append('data', formatDateForMySQL(data));
             formData.append('horario_inicio', formatTimeForMySQL(horarioInicio));
             formData.append('horario_fim', formatTimeForMySQL(horarioFim));
@@ -319,6 +323,7 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
 
                         <FormInput2
                             placeholder={'Insira o nome do serviço'}
+                            characterLimit={true}
                             maxLength={21}
                             value={titulo}
                             setValue={setTitulo}
@@ -326,6 +331,7 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
 
                         <FormInput2
                             placeholder={'Descreva o serviço'}
+                            characterLimit={true}
                             maxLength={88}
                             value={descricao}
                             setValue={setDescricao}

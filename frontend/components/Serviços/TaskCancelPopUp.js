@@ -35,7 +35,7 @@ export default function TaskCancelPopUp({ visible, onClose, name, onConfirm }){
 
                                 <Text style={styles.text3}>ATENÇÃO:</Text>
 
-                                <Text style={styles.textDesc}>Após cancelar sua inscrição, você não poderá participar deste mesmo serviço novamente e perderá pontos de participação</Text>
+                                <Text style={styles.textDesc}>Após cancelar sua inscrição, você não poderá participar deste serviço novamente e perderá pontos de participação</Text>
 
                             </View>
 
@@ -83,8 +83,7 @@ const styles = StyleSheet.create({
     text1: {
         fontFamily: Fonts.light,
         fontSize: 16,
-        textAlign: 'center',
-        
+        textAlign: 'center'
     },
     text2: {
         fontFamily: Fonts.condensedSemiBold,

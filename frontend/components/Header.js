@@ -7,10 +7,12 @@ import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 // Local
 import { Colors, Fonts } from "./Theme";
 
-export default function Header({ txt }) {
+export default function Header({ txt, navigation }) {
     return (
         <View style={styles.container}>
-            <TouchableOpacity>
+            <TouchableOpacity
+                onPress={() => navigation && navigation.navigate('Settings')}
+            >
                 <MaterialCommunityIcons
                     name='cog-outline'
                     size={32}

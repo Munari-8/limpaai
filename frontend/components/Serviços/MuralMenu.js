@@ -55,8 +55,8 @@ const styles = StyleSheet.create({
         position: 'absolute',
         zIndex: 8,
 
-        bottom: '11.9%',
-        right: '4.6%',
+        right: 16,
+        bottom: 16,
         
         alignItems: 'flex-end',
         gap: 8
