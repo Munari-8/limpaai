@@ -14,21 +14,26 @@ import { Colors, Fonts } from "../Theme";
 import Button from "../Button";
 import TaskCancelPopUp from "./TaskCancelPopUp";
 import TaskRemoveUserPopUp from "./TaskRemoveUserPopUp";
+import EditTaskPopUp from "./EditTaskPopUp";
+import TaskForgivePopUp from "./TaskForgivePopUp";
+
 import { API_URL } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function TaskPopUp({
-    visible, onClose, lightColor, color, taskIcon, name, description, date, startTime, endTime, address,
-    latitude, longitude, image, personCount, username, avatar, avatarPlaceholder, idServico, idOfertante, minhaSituacao, onRefresh
+    visible, onClose, lightColor, color, taskIcon, taskType, name, rawTitle, description,
+    date, rawDate, startTime, endTime, address, latitude, longitude, image, personCount, personLimit,
+    username, avatar, avatarPlaceholder, idServico, idOfertante, minhaSituacao, onRefresh, edicaoSensivelUsada
 }){
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
 
-    // TaskCancelPopUp control
+    // TaskCancelPopUp ctrl
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [userToRemove, setUserToRemove] = useState(null);
+    const [userToForgive, setUserToForgive] = useState(null);
 
     const handleRemoveParticipant = async (reason) => {
         if (!userToRemove) return;
@@ -51,6 +56,33 @@ export default function TaskPopUp({
             } else {
                 const data = await response.json();
                 Alert.alert('Erro', data.mensagem || 'Não foi possível remover.');
+            }
+        } catch (error) {
+            Alert.alert('Erro de conexão', 'Não foi possível contatar o servidor.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleForgiveParticipant = async () => {
+        if (!userToForgive) return;
+        const targetName = userToForgive.nome_exibicao || userToForgive.nome;
+        try {
+            setLoading(true);
+            const response = await fetch(`${API_URL}/participacoes/perdoar`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_participacao: userToForgive.id_participacao })
+            });
+
+            if (response.ok) {
+                Alert.alert('Sucesso', `${targetName} poderá solicitar participação novamente.`);
+                setUserToForgive(null);
+                loadParticipations();
+                if (onRefresh) onRefresh();
+            } else {
+                const data = await response.json();
+                Alert.alert('Erro', data.mensagem || 'Não foi possível perdoar o usuário.');
             }
         } catch (error) {
             Alert.alert('Erro de conexão', 'Não foi possível contatar o servidor.');
@@ -169,7 +201,7 @@ export default function TaskPopUp({
     
     const fullTime =  startTime && endTime && endTime !== startTime ? `${startTime}\n${endTime}` : startTime;
 
-    // Image control
+    // Image ctrl
     const [activeIndex, setActiveIndex] = useState(null);
     const [imageSize, setImageSize] = useState({});
 
@@ -213,6 +245,9 @@ export default function TaskPopUp({
         });Linking.openURL(url);
     };
 
+    // EditTaskPopUp ctrl
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
     return (
         <>
         <Modal
@@ -234,6 +269,39 @@ export default function TaskPopUp({
                 userName={userToRemove ? (userToRemove.nome_exibicao || userToRemove.nome) : ''}
                 onConfirm={handleRemoveParticipant}
                 loading={loading}
+            />
+
+            <TaskForgivePopUp
+                visible={!!userToForgive}
+                onClose={() => setUserToForgive(null)}
+                userName={userToForgive ? (userToForgive.nome_exibicao || userToForgive.nome) : ''}
+                onConfirm={handleForgiveParticipant}
+                loading={loading}
+            />
+
+            <EditTaskPopUp
+                visible={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                taskData={{
+                    idServico,
+                    titulo: rawTitle || name,
+                    descricao: description,
+                    tipo: taskType,
+                    endereco: address,
+                    latitude,
+                    longitude,
+                    data: rawDate,
+                    horario_inicio: startTime,
+                    horario_fim: endTime,
+                    vagas_max: personLimit,
+                    imagens: imageList,
+                    edicao_sensivel_usada: Boolean(edicaoSensivelUsada)
+                }}
+                onSuccess={() => {
+                    setIsEditModalOpen(false);
+                    if (onRefresh) onRefresh();
+                    onClose();
+                }}
             />
             
             <View style={styles.bgShadow}>
@@ -433,10 +501,11 @@ export default function TaskPopUp({
                             <View style={styles.info}>
                                 <View style={styles.tag}>
                                     <Image
+                                    source={avatar ? { uri: formatUri(avatar) } : null}
                                         placeholder={avatarPlaceholder}
                                         style={[styles.avatar, { backgroundColor: lightColor }]}
-                                        contentFit="contain"
-                                        placeholderContentFit="contain"
+                                        contentFit="cover"
+                                        placeholderContentFit="cover"
                                     />
 
                                     <Text style={[styles.tagText, { color: color, marginLeft: '1%' }]}>{username}</Text>
@@ -456,6 +525,14 @@ export default function TaskPopUp({
                                                 .filter(p => p.situacao === 'pendente' || p.situacao === 'aprovado')
                                                 .map((item) => (
                                                     <View key={item.id_participacao} style={styles.requestRow}>
+                                                        <Image
+                                                            source={item.foto_perfil ? { uri: formatUri(item.foto_perfil) } : null}
+                                                            placeholder={avatarPlaceholder}
+                                                            style={[styles.requestAvatar, { backgroundColor: lightColor }]}
+                                                            contentFit="cover"
+                                                            placeholderContentFit="cover"
+                                                        />
+
                                                         <View style={{ flex: 1 }}>
                                                             <Text style={styles.requestName}>
                                                                 {item.nome_exibicao || item.nome}
@@ -497,14 +574,55 @@ export default function TaskPopUp({
                                         </View>
                                     )}
 
+                                    {participations.filter(p => p.situacao === 'recusado' || p.situacao === 'removido').length > 0 && (
+                                        <View style={[styles.requestsBox, { marginTop: 12 }]}>
+                                            <Text style={[styles.tagText, { color: Colors.b50, marginBottom: 8 }]}>
+                                                Recusados / Removidos:
+                                            </Text>
+
+                                            {participations
+                                                .filter(p => p.situacao === 'recusado' || p.situacao === 'removido')
+                                                .map((item) => (
+                                                    <View key={item.id_participacao} style={styles.requestRow}>
+                                                        <Image
+                                                            source={item.foto_perfil ? { uri: formatUri(item.foto_perfil) } : null}
+                                                            placeholder={avatarPlaceholder}
+                                                            style={[styles.requestAvatar, { backgroundColor: lightColor }]}
+                                                            contentFit="cover"
+                                                            placeholderContentFit="cover"
+                                                        />
+
+                                                        <View style={{ flex: 1 }}>
+                                                            <Text style={styles.requestName}>
+                                                                {item.nome_exibicao || item.nome}
+                                                            </Text>
+                                                            <Text style={styles.requestStatus}>
+                                                                {item.situacao === 'recusado' ? 'Recusado' : 'Removido'}
+                                                            </Text>
+                                                        </View>
+                                                        
+                                                        <TouchableOpacity
+                                                            style={[styles.actionBadge, { backgroundColor: Colors.greenLA1 }]}
+                                                            onPress={() => setUserToForgive(item)}
+                                                            disabled={loading}
+                                                        >
+                                                            <MaterialCommunityIcons
+                                                                name="account-reactivate"
+                                                                size={20}
+                                                                color={Colors.white}
+                                                            />
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                ))}
+                                        </View>
+                                    )}
+
                                     <View style={[styles.tag, { marginTop: 12 }]}>
                                         <Button
                                             text={loading ? 'Carregando...' : 'Editar Serviço'}
                                             color={color}
                                             flex={true}
-                                            onPress={() => {
-                                                Alert.alert("Editar", "Funcionalidade de edição em breve!");
-                                            }}
+                                            onPress={() => setIsEditModalOpen(true)}
                                             disabled={loading}
                                         />
                                     </View>
@@ -783,18 +901,16 @@ const styles = StyleSheet.create({
     requestsBox: {
         width: '100%',
         backgroundColor: Colors.formInputBg,
-        borderRadius: 16,
+        borderRadius: 24,
 
-        padding: 12
+        paddingVertical: 12,
+        paddingHorizontal: 16
     },
     requestRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingVertical: 8,
-
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.b10 || '#e0e0e0'
     },
     requestName: {
         fontFamily: Fonts.bold,
@@ -809,7 +925,7 @@ const styles = StyleSheet.create({
     actionBadge: {
         width: 34,
         height: 34,
-        borderRadius: 17,
+        borderRadius: 100,
 
         alignItems: 'center',
         justifyContent: 'center'
@@ -856,6 +972,13 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 100,
+    },
+    requestAvatar: {
+        width: 36,
+        height: 36,
+        borderRadius: 100,
+
+        marginRight: 10
     },
     blockedStatusText: {
         fontFamily: Fonts.bold,

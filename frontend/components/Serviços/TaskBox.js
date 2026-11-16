@@ -22,7 +22,7 @@ const formatDateToBR = (dateString) => {
 
 export default function TaskBox({
     taskType, name, description, date, showDate = true, startTime, endTime, address, latitude, longitude, idOfertante,
-    imagens, image, registeredPeople = 0, personLimit = 0, username, showDateTag = false, ...props
+    imagens, image, registeredPeople = 0, personLimit = 0, avatar, username, showDateTag = false, ...props
 }) {
     const normalizedType = taskType ? taskType.toLowerCase() : '';
 
@@ -104,9 +104,15 @@ export default function TaskBox({
                 username={username}
                 idOfertante={idOfertante}
                 avatarPlaceholder={avatarPlaceholder}
+                avatar={avatar}
                 idServico={props.idServico}
                 minhaSituacao={props.minhaSituacao}
                 onRefresh={props.onRefresh}
+                rawTitle={name}
+                rawDate={date}
+                taskType={taskType}
+                personLimit={personLimit}
+                edicaoSensivelUsada={props.edicao_sensivel_usada}
             />
 
             {showDateTag && (

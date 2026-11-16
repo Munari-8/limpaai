@@ -33,10 +33,13 @@ CREATE TABLE USUARIO (
     id_usuario INT(11) NOT NULL AUTO_INCREMENT,
     id_categoria INT(11) NOT NULL,
     nome VARCHAR(64) NOT NULL,
+    nome_exibicao VARCHAR(100) NULL,
+    username VARCHAR(100) NULL,
     email VARCHAR(64) NOT NULL,
     senha VARCHAR(255) NOT NULL,
     data_nascimento DATE,
     tipo_usuario VARCHAR(48),
+    genero VARCHAR(50) NULL,
     cidade VARCHAR(100),
     bairro VARCHAR(100),
     foto_perfil VARCHAR(255),
@@ -62,6 +65,7 @@ CREATE TABLE SERVICO (
     imagens TEXT;
     status VARCHAR(50),
     vagas_max INT(11),
+    edicao_sensivel_usada TINYINT(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (id_servico),
     CONSTRAINT fk_servico_ofertante FOREIGN KEY (id_ofertante) 
         REFERENCES USUARIO (id_usuario)

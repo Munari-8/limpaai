@@ -314,7 +314,7 @@ app.get('/servicos', (req, res) => {
     });
 });
 
-// Requests participation in a task
+// Request participation in a task
 app.post('/participacoes', (req, res) => {
     const { id_usuario, id_servico } = req.body;
 
@@ -347,6 +347,106 @@ app.post('/participacoes', (req, res) => {
     });
 });
 
+// Edit task
+app.put('/servicos/:id', upload.array('images', 10), (req, res) => {
+    const { id } = req.params;
+    const {
+        id_ofertante, titulo, descricao, taskType, endereco, latitude,
+        longitude, data, horario_inicio, horario_fim, vagas_max, existingImages
+    } = req.body;
+
+    let keptImages = [];
+    try {
+        if (existingImages) {
+            keptImages = JSON.parse(existingImages);
+        }
+    } catch (e) {
+        keptImages = [];
+    }
+
+    const newImagePaths = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    const finalImages = [...keptImages, ...newImagePaths].slice(0, 10);
+
+    // Fetches current data to validate the single-edit lock
+    const checkSql = `SELECT * FROM SERVICO WHERE id_servico = ? AND id_ofertante = ?`;
+    connection.query(checkSql, [id, id_ofertante], (err, rows) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ mensagem: 'Erro ao verificar serviço.' });
+        }
+
+        if (!rows || rows.length === 0) {
+            return res.status(403).json({ mensagem: 'Serviço não encontrado ou sem permissão.' });
+        }
+
+        const current = rows[0];
+        const currentDate = current.data ? new Date(current.data).toISOString().split('T')[0] : '';
+        const currentStart = current.horario_inicio ? String(current.horario_inicio).slice(0, 5) : '';
+        const currentEnd = current.horario_fim ? String(current.horario_fim).slice(0, 5) : '';
+
+        const newStart = horario_inicio ? String(horario_inicio).slice(0, 5) : '';
+        const newEnd = horario_fim ? String(horario_fim).slice(0, 5) : '';
+
+        const sensitiveChanged =
+            currentDate !== data ||
+            currentStart !== newStart ||
+            currentEnd !== newEnd ||
+            current.endereco !== endereco ||
+            Number(current.vagas_max) !== Number(vagas_max || 10);
+
+        if (current.edicao_sensivel_usada && sensitiveChanged) {
+            return res.status(400).json({
+                mensagem: 'Os dados sensíveis (data, horário, local e vagas) já foram editados uma vez e não podem mais ser alterados.'
+            });
+        }
+
+        const nextEdicaoUsada = current.edicao_sensivel_usada ? 1 : (sensitiveChanged ? 1 : 0);
+
+        const sql = `
+            UPDATE SERVICO
+            SET titulo = ?, descricao = ?, tipo = ?, endereco = ?, latitude = ?, longitude = ?,
+                data = ?, horario_inicio = ?, horario_fim = ?, imagens = ?, vagas_max = ?, edicao_sensivel_usada = ?
+            WHERE id_servico = ? AND id_ofertante = ?
+        `;
+
+        connection.query(
+            sql,
+            [
+                titulo,
+                descricao,
+                taskType,
+                endereco,
+                latitude || null,
+                longitude || null,
+                data,
+                horario_inicio || null,
+                horario_fim || null,
+                JSON.stringify(finalImages),
+                vagas_max || 10,
+                nextEdicaoUsada,
+                id,
+                id_ofertante
+            ],
+            (erro) => {
+                if (erro) {
+                    console.log(erro);
+                    return res.status(500).json({ mensagem: 'Erro ao atualizar serviço' });
+                }
+
+                const sqlNotif = `
+                    INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
+                    SELECT id_usuario, CONCAT('O serviço "', ?, '" foi atualizado pelo organizador.'), NOW()
+                    FROM PARTICIPACAO
+                    WHERE id_servico = ? AND situacao = 'aprovado'
+                `;
+                connection.query(sqlNotif, [titulo, id]);
+
+                res.json({ mensagem: 'Serviço atualizado com sucesso!' });
+            }
+        );
+    })
+});
+
 // Lists subscribed/pending
 app.get('/servicos/:id/participacoes', (req, res) => {
     const { id } = req.params;
@@ -362,7 +462,7 @@ app.get('/servicos/:id/participacoes', (req, res) => {
         FROM PARTICIPACAO p
         JOIN USUARIO u ON p.id_usuario = u.id_usuario
         WHERE p.id_servico = ?
-        ORDER BY FIELD(p.situacao, 'pendente', 'aprovado', 'recusado'), p.inscrito_em ASC
+        ORDER BY FIELD(p.situacao, 'pendente', 'aprovado', 'recusado', 'removido'), p.inscrito_em ASC
     `;
 
     connection.query(sql, [id], (erro, resultados) => {
@@ -427,6 +527,41 @@ app.put('/participacoes/remover', (req, res) => {
         connection.query(sqlNotif, [justificativa.trim(), id_participacao]);
 
         res.json({ mensagem: 'Participante removido com sucesso.' });
+    });
+});
+
+// Forgive refused/removed participant
+app.delete('/participacoes/perdoar', (req, res) => {
+    const { id_participacao } = req.body;
+
+    const sqlGet = `
+        SELECT p.id_usuario, s.titulo
+        FROM PARTICIPACAO p
+        JOIN SERVICO s ON p.id_servico = s.id_servico
+        WHERE p.id_participacao = ?
+    `;
+
+    connection.query(sqlGet, [id_participacao], (err, rows) => {
+        if (err || !rows || rows.length === 0) {
+            return res.status(404).json({ mensagem: 'Participação não encontrada.' });
+        }
+
+        const { id_usuario, titulo } = rows[0];
+
+        const sqlDelete = `DELETE FROM PARTICIPACAO WHERE id_participacao = ?`;
+        connection.query(sqlDelete, [id_participacao], (erro) => {
+            if (erro) {
+                return res.status(500).json({ mensagem: 'Erro ao perdoar participante.' });
+            }
+
+            const sqlNotif = `
+                INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
+                VALUES (?, CONCAT('O organizador permitiu que você solicite participação novamente no serviço "', ?, '".'), NOW())
+            `;
+            connection.query(sqlNotif, [id_usuario, titulo]);
+
+            res.json({ mensagem: 'Usuário perdoado com sucesso.' });
+        });
     });
 });
 

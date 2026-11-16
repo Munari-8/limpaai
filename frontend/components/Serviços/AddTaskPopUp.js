@@ -583,9 +583,10 @@ export default function AddTaskPopUp({ visible, onClose, onSuccess }) {
 const styles = StyleSheet.create({
     bgShadow: {
         flex: 1,
+        backgroundColor: Colors.b25,
+
         justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: Colors.b25
+        alignItems: 'center'
     },
     backdropTouch: {
         position: 'absolute',
@@ -596,6 +597,7 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         width: '85%',
         maxHeight: '85%',
+        
         overflow: 'hidden'
     },
     scrollContent: {
@@ -608,15 +610,18 @@ const styles = StyleSheet.create({
         gap: 2,
         paddingTop: 8,
         paddingBottom: 2,
+
         width: '100%'
     },
     webInput: {
-        backgroundColor: Colors.formInputBg || '#f0f0f0',
-        padding: '12px 16px',
+        backgroundColor: Colors.formInputBg,
         width: '100%',
         borderRadius: '12px',
         border: '1px solid #ccc',
         outline: 'none',
+
+        padding: '12px 16px',
+        
         fontFamily: 'sans-serif',
         fontSize: '14px',
         color: '#333',
@@ -626,27 +631,31 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: Colors.formInputBg,
-        width: '100%',
-        borderRadius: 16,
         padding: 12,
         marginTop: 6,
         gap: 8,
+
+        backgroundColor: Colors.formInputBg,
+        width: '100%',
+        borderRadius: 16,
         borderWidth: 2,
         borderColor: Colors.b10,
         borderStyle: 'dashed'
     },
     imagePreviewContainer: {
         flexDirection: 'row',
-        width: '100%',
         marginTop: 8,
-        marginBottom: 8
+        marginBottom: 8,
+
+        width: '100%'
     },
     thumbnailWrapper: {
         position: 'relative',
+
         marginRight: 8,
         borderRadius: 8,
         overflow: 'hidden',
+
         width: 64,
         height: 64
     },
@@ -658,6 +667,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 2,
         right: 2,
+
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         borderRadius: 16,
         padding: 2
@@ -667,6 +677,7 @@ const styles = StyleSheet.create({
         height: 160,
         borderRadius: 16,
         backgroundColor: Colors.formInputBg,
+
         overflow: 'hidden',
         marginTop: 8,
         marginBottom: 8,
@@ -675,6 +686,7 @@ const styles = StyleSheet.create({
     },
     mapPlaceholderBg: {
         flex: 1,
+
         justifyContent: 'center',
         alignItems: 'center',
         gap: 4
@@ -684,7 +696,9 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
+
         backgroundColor: Colors.b10,
+
         flexDirection: 'row',
         alignItems: 'center',
         padding: 8,
@@ -699,6 +713,7 @@ const styles = StyleSheet.create({
     },
     webMapFallback: {
         flex: 1,
+
         justifyContent: 'center',
         alignItems: 'center'
     },
@@ -707,16 +722,21 @@ const styles = StyleSheet.create({
         bottom: 24,
         left: 24,
         right: 24,
+        elevation: 5,
+
         backgroundColor: Colors.background,
-        padding: 16,
         borderRadius: 16,
+
+        padding: 16,
         alignItems: 'center',
         gap: 12,
-        elevation: 5
     },
+
+    // Text
     textTitle: {
         fontFamily: Fonts.condensedBlack,
         fontSize: 24,
+
         marginBottom: 8
     },
     labelText: {
@@ -737,16 +757,19 @@ const styles = StyleSheet.create({
         fontFamily: Fonts.regular,
         fontSize: 13,
         color: Colors.black,
+
         flex: 1
     },
     webMapText: {
         fontFamily: Fonts.bold,
         fontSize: 16,
+
         marginTop: 12
     },
     mapInstructionText: {
         fontFamily: Fonts.regular,
         fontSize: 14,
+
         textAlign: 'center'
     }
 });

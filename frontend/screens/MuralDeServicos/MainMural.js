@@ -70,8 +70,9 @@ export default function MainMuralScreen() {
                                             personLimit={item.vagas_max}
                                             minhaSituacao={item.minha_situacao}
                                             idOfertante={item.id_ofertante}
-                                            avatarPlaceholder={item.foto_ofertante}
+                                            avatar={item.foto_ofertante}
                                             onRefresh={loadTasks}
+                                            edicao_sensivel_usada={item.edicao_sensivel_usada}
                                         />
                                     ))
                                 )}
@@ -104,8 +105,9 @@ export default function MainMuralScreen() {
                                     personLimit={item.vagas_max}
                                     minhaSituacao={item.minha_situacao}
                                     idOfertante={item.id_ofertante}
-                                    avatarPlaceholder={item.foto_ofertante}
+                                    avatar={item.foto_ofertante}
                                     onRefresh={loadTasks}
+                                    edicao_sensivel_usada={item.edicao_sensivel_usada}
                                 />
                             ))
                         ) : (
