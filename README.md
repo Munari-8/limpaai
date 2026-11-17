@@ -40,6 +40,7 @@ CREATE TABLE USUARIO (
     cidade VARCHAR(100),
     bairro VARCHAR(100),
     foto_perfil VARCHAR(255),
+    servicos_realizados INT(11) NOT NULL DEFAULT 0,
     PRIMARY KEY (id_usuario),
     CONSTRAINT fk_usuario_categoria FOREIGN KEY (id_categoria) 
         REFERENCES CATEGORIA_USUARIO (id_categoria_usuario)
@@ -58,8 +59,8 @@ CREATE TABLE SERVICO (
     data DATE,
     horario_inicio TIME,
     horario_fim TIME,
-    imagens TEXT;
-    status VARCHAR(50),
+    imagens TEXT, -- Corrigido de ';' para ','
+    status ENUM('aberto', 'cancelado', 'concluido') NOT NULL DEFAULT 'aberto',
     vagas_max INT(11),
     edicao_sensivel_usada TINYINT(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (id_servico),
@@ -74,6 +75,8 @@ CREATE TABLE NOTIFICACAO (
     mensagem TEXT,
     enviada_em DATETIME,
     lida TINYINT(1) DEFAULT 0,
+    tipo ENUM('mensagem', 'servico', 'cancelamento') NOT NULL DEFAULT 'servico',
+    id_referencia INT(11) NULL,
     PRIMARY KEY (id_notificacao),
     CONSTRAINT fk_notificacao_usuario FOREIGN KEY (id_usuario) 
         REFERENCES USUARIO (id_usuario)
@@ -86,6 +89,7 @@ CREATE TABLE PARTICIPACAO (
     id_servico INT(11) NOT NULL,
     situacao VARCHAR(100),
     inscrito_em DATETIME,
+    presenca ENUM('pendente', 'presente', 'ausente') NOT NULL DEFAULT 'pendente',
     PRIMARY KEY (id_participacao),
     CONSTRAINT fk_participacao_usuario FOREIGN KEY (id_usuario) 
         REFERENCES USUARIO (id_usuario)
@@ -104,9 +108,9 @@ CREATE TABLE CONVERSA (
     criada_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     atualizada_em DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY unique_chat_servico (id_servico, id_solicitante, id_organizador),
-    FOREIGN KEY (id_servico) REFERENCES USUARIO(id_servico) ON DELETE CASCADE,
-    FOREIGN KEY (id_solicitante) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE,
-    FOREIGN KEY (id_organizador) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
+    CONSTRAINT fk_conversa_servico FOREIGN KEY (id_servico) REFERENCES SERVICO(id_servico) ON DELETE CASCADE,
+    CONSTRAINT fk_conversa_solicitante FOREIGN KEY (id_solicitante) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE,
+    CONSTRAINT fk_conversa_organizador FOREIGN KEY (id_organizador) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
 );
 
 CREATE TABLE MENSAGEM (
@@ -116,8 +120,8 @@ CREATE TABLE MENSAGEM (
     conteudo TEXT NOT NULL,
     lida TINYINT(1) NOT NULL DEFAULT 0,
     enviada_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_conversa) REFERENCES CONVERSA(id_conversa) ON DELETE CASCADE,
-    FOREIGN KEY (id_remetente) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
+    CONSTRAINT fk_mensagem_conversa FOREIGN KEY (id_conversa) REFERENCES CONVERSA(id_conversa) ON DELETE CASCADE,
+    CONSTRAINT fk_mensagem_remetente FOREIGN KEY (id_remetente) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
 );
  
 INSERT INTO CATEGORIA_USUARIO (nome_categoria) VALUES ('Comum');

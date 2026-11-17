@@ -26,7 +26,7 @@ wss.on('connection', (socket) => {
         }
 
         // Registers the connected user to the WebSocket
-        if (data.type === 'regiter' && data.userId) {
+        if (data.type === 'register' && data.userId) {
             const uid = String(data.userId);
             socket.userId = uid;
 
@@ -357,6 +357,7 @@ app.get('/servicos', (req, res) => {
         FROM SERVICO s
         JOIN USUARIO u ON s.id_ofertante = u.id_usuario
         LEFT JOIN PARTICIPACAO p ON s.id_servico = p.id_servico
+        WHERE s.status = 'aberto'
         GROUP BY s.id_servico
         ORDER BY s.data DESC
     `;
@@ -374,31 +375,60 @@ app.get('/servicos', (req, res) => {
 app.post('/participacoes', (req, res) => {
     const { id_usuario, id_servico } = req.body;
 
-    const checkSql = `SELECT * FROM PARTICIPACAO WHERE id_usuario = ? AND id_servico = ?`;
-    connection.query(checkSql, [id_usuario, id_servico], (err, rows) => {
-        if (rows && rows.length > 0) {
-            return res.status(400).json({ mensagem: 'Você já solicitou participação neste serviço' })
+    const checkVagasSql = `
+        SELECT 
+            s.vagas_max,
+            s.status,
+            COUNT(CASE WHEN p.situacao = 'aprovado' THEN 1 END) AS inscritos_confirmados
+        FROM SERVICO s
+        LEFT JOIN PARTICIPACAO p ON s.id_servico = p.id_servico
+        WHERE s.id_servico = ?
+        GROUP BY s.id_servico
+    `;
+    connection.query(checkVagasSql, [id_servico], (errVagas, taskRows) => {
+        if (errVagas || !taskRows || taskRows.length === 0) {
+            return res.status(400).json({ mensagem: 'Serviço não encontrado.' })
         }
 
-        const sql = `
-            INSERT INTO PARTICIPACAO (id_usuario, id_servico, situacao, inscrito_em)
-            VALUES (?, ?, 'pendente', NOW())
-        `;
+        const srv = taskRows[0]
+        if (srv.status !== 'aberto') {
+            return res.status(400).json({ mensagem: 'Este serviço não está mais aberto.' });
+        }
 
-        connection.query(sql, [id_usuario, id_servico], (erro, resultado) => {
-            if (erro) {
-                console.log(erro);
-                return res.status(500).json({ mensagem: 'Erro ao solicitar participação' })
+        if (Number(srv.inscritos_confirmados) >= Number(srv.vagas_max)) {
+            return res.status(400).json({ mensagem: 'Este serviço já atingiu o limite máximo de participantes.' });
+        }
+
+        const checkSql = `SELECT * FROM PARTICIPACAO WHERE id_usuario = ? AND id_servico = ?`;
+        connection.query(checkSql, [id_usuario, id_servico], (err, rows) => {
+            if (rows && rows.length > 0) {
+                return res.status(400).json({ mensagem: 'Você já solicitou participação neste serviço' });
             }
 
-            const sqlNotif = `
-                INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
-                SELECT id_ofertante, 'Novo pedido de participação em seu serviço.', NOW()
-                FROM SERVICO WHERE id_servico = ?
+            const sql = `
+                INSERT INTO PARTICIPACAO (id_usuario, id_servico, situacao, inscrito_em)
+                VALUES (?, ?, 'pendente', NOW())
             `;
-            connection.query(sqlNotif, [id_servico]);
 
-            res.json({ mensagem: 'Solicitação enviada com sucesso!' });
+            connection.query(sql, [id_usuario, id_servico], (erro) => {
+                if (erro) {
+                    console.log(erro);
+                    return res.status(500).json({ mensagem: 'Erro ao solicitar participação' });
+                }
+
+                const sqlNotif = `
+                    INSERT INTO NOTIFICACAO (id_usuario, mensagem, tipo, id_referencia, enviada_em)
+                    SELECT id_ofertante, CONCAT('Novo pedido de participação no serviço "', titulo, '".'), 'servico', ?, NOW()
+                    FROM SERVICO WHERE id_servico = ?
+                `;
+                connection.query(sqlNotif, [id_servico, id_servico], () => {
+                    connection.query(`SELECT id_ofertante FROM SERVICO WHERE id_servico = ?`, [id_servico], (e, r) => {
+                        if (r && r[0]) notifyUsersWS([r[0].id_ofertante], { type: 'notification_update' });
+                    });
+                });
+
+                res.json({ mensagem: 'Solicitação enviada com sucesso!' });
+            });
         });
     });
 });
@@ -490,13 +520,16 @@ app.put('/servicos/:id', upload.array('images', 10), (req, res) => {
                 }
 
                 const sqlNotif = `
-                    INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
-                    SELECT id_usuario, CONCAT('O serviço "', ?, '" foi atualizado pelo organizador.'), NOW()
+                    INSERT INTO NOTIFICACAO (id_usuario, mensagem, tipo, id_referencia, enviada_em)
+                    SELECT id_usuario, CONCAT('O serviço "', ?, '" foi atualizado pelo organizador.'), 'servico', ?, NOW()
                     FROM PARTICIPACAO
                     WHERE id_servico = ? AND situacao = 'aprovado'
                 `;
-                connection.query(sqlNotif, [titulo, id]);
-
+                connection.query(sqlNotif, [titulo, id, id], () => {
+                    connection.query(`SELECT id_usuario FROM PARTICIPACAO WHERE id_servico = ? AND situacao = 'aprovado'`, [id], (e, r) => {
+                        if (r && r.length > 0) notifyUsersWS(r.map(u => u.id_usuario), { type: 'notification_update' });
+                    });
+                });
                 res.json({ mensagem: 'Serviço atualizado com sucesso!' });
             }
         );
@@ -574,13 +607,17 @@ app.put('/participacoes/remover', (req, res) => {
         }
         
         const sqlNotif = `
-            INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
-            SELECT p.id_usuario, CONCAT('Você foi removido do serviço "', s.titulo, '". Motivo: ', ?), NOW()
+            INSERT INTO NOTIFICACAO (id_usuario, mensagem, tipo, enviada_em)
+            SELECT p.id_usuario, CONCAT('Você foi removido do serviço "', s.titulo, '". Motivo: ', ?), 'cancelamento', NOW()
             FROM PARTICIPACAO p
             JOIN SERVICO s ON p.id_servico = s.id_servico
             WHERE p.id_participacao = ?
         `;
-        connection.query(sqlNotif, [justificativa.trim(), id_participacao]);
+        connection.query(sqlNotif, [justificativa.trim(), id_participacao], () => {
+            connection.query(`SELECT id_usuario FROM PARTICIPACAO WHERE id_participacao = ?`, [id_participacao], (e, r) => {
+                if (r && r[0]) notifyUsersWS([r[0].id_usuario], { type: 'notification_update' });
+            });
+        });
 
         res.json({ mensagem: 'Participante removido com sucesso.' });
     });
@@ -591,7 +628,7 @@ app.delete('/participacoes/perdoar', (req, res) => {
     const { id_participacao } = req.body;
 
     const sqlGet = `
-        SELECT p.id_usuario, s.titulo
+        SELECT p.id_usuario, p.id_servico, s.titulo
         FROM PARTICIPACAO p
         JOIN SERVICO s ON p.id_servico = s.id_servico
         WHERE p.id_participacao = ?
@@ -602,7 +639,7 @@ app.delete('/participacoes/perdoar', (req, res) => {
             return res.status(404).json({ mensagem: 'Participação não encontrada.' });
         }
 
-        const { id_usuario, titulo } = rows[0];
+        const { id_usuario, id_servico, titulo } = rows[0];
 
         const sqlDelete = `DELETE FROM PARTICIPACAO WHERE id_participacao = ?`;
         connection.query(sqlDelete, [id_participacao], (erro) => {
@@ -611,12 +648,111 @@ app.delete('/participacoes/perdoar', (req, res) => {
             }
 
             const sqlNotif = `
-                INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
-                VALUES (?, CONCAT('O organizador permitiu que você solicite participação novamente no serviço "', ?, '".'), NOW())
+                INSERT INTO NOTIFICACAO (id_usuario, mensagem, tipo, id_referencia, enviada_em)
+                VALUES (?, CONCAT('O organizador permitiu que você solicite participação novamente no serviço "', ?, '".'), 'servico', ?, NOW())
             `;
-            connection.query(sqlNotif, [id_usuario, titulo]);
+            connection.query(sqlNotif, [id_usuario, titulo, id_servico], () => {
+                notifyUsersWS([id_usuario], { type: 'notification_update' });
+            });
 
             res.json({ mensagem: 'Usuário perdoado com sucesso.' });
+        });
+    });
+});
+
+// Cancel task w reason (Owner)
+app.put('/servicos/:id/cancelar', (req, res) => {
+    const { id } = req.params;
+    const { id_ofertante, reason } = req.body;
+
+    if (!reason || reason.trim() === '') {
+        return res.status(400).json({ mensagem: 'A justificativa é obrigatória.' });
+    }
+
+    const checkSql = `SELECT titulo FROM SERVICO WHERE id_servico = ? AND id_ofertante = ?`;
+    connection.query(checkSql, [id, id_ofertante], (err, rows) => {
+        if (err || !rows || rows.length === 0) {
+            return res.status(403).json({ mensagem: 'Serviço não encontrado ou sem permissão.' });
+        }
+
+        const title = rows[0].titulo;
+        const updateSql = `UPDATE SERVICO SET status = 'cancelado' WHERE id_servico = ?`;
+
+        connection.query(updateSql, [id], (error) => {
+            if (error) {
+                console.log(error);
+                return res.status(500).json({ mensagem: 'Erro ao cancelar serviço.' });
+            }
+
+            const sqlNotif = `
+                INSERT INTO NOTIFICACAO (id_usuario, mensagem, tipo, enviada_em)
+                SELECT id_usuario, CONCAT('O serviço "', ?, '" foi cancelado pelo organizador. Motivo: ', ?), 'cancelamento', NOW()
+                FROM PARTICIPACAO
+                WHERE id_servico = ? AND situacao IN ('aprovado', 'pendente')
+            `;
+            connection.query(sqlNotif, [title, reason.trim(), id], () => {
+                connection.query(`SELECT id_usuario FROM PARTICIPACAO WHERE id_servico = ? AND situacao IN ('aprovado', 'pendente')`, [id], (e, r) => {
+                    if (r && r.length > 0) notifyUsersWS(r.map(u => u.id_usuario), { type: 'notification_update' });
+                });
+            });
+
+            res.json({ mensagem: 'Serviço cancelado com sucesso.' });
+        });
+    });
+});
+
+// Complete task and register participant attendance (Owner)
+app.put('/servicos/:id/concluir', (req, res) => {
+    const { id } = req.params;
+    const { id_ofertante, presences} = req.body;
+
+    const checkSql = `SELECT titulo FROM SERVICO WHERE id_servico = ? AND id_ofertante = ?`;
+    connection.query(checkSql, [id, id_ofertante], (err, rows) => {
+        if (err || rows.length === 0) {
+            return res.status(403).json({ mensagem: 'Serviço não encontrado ou sem permissão.' });
+        }
+
+        const title = rows[0].titulo;
+        const updateSrvSql = `UPDATE SERVICO SET status = 'concluido' WHERE id_servico = ?`;
+
+        connection.query(updateSrvSql, [id], (error) => {
+            if (error) {
+                console.log(error);
+                return res.status(500).json({ mensagem: 'Erro ao concluir serviço.' });
+            }
+
+            if (Array.isArray(presences)) {
+                presences.forEach((p) => {
+                    const presenceStatus = p.presenca === 'presente' ? 'presente' : 'ausente';
+                    connection.query(
+                        `UPDATE PARTICIPACAO SET presenca = ? WHERE id_participacao = ? AND id_servico = ?`,
+                        [presenceStatus, p.id_participacao, id],
+                        (errUpdatePart) => {
+                            if (!errUpdatePart && presenceStatus === 'presente') {
+                                // Incrementa o contador de serviços realizados do usuário
+                                connection.query(
+                                    `UPDATE USUARIO SET servicos_realizados = servicos_realizados + 1 WHERE id_usuario = ?`,
+                                    [p.id_usuario]
+                                );
+                            }
+                        }
+                    );
+                });
+            }
+            
+            const sqlNotif = `
+                INSERT INTO NOTIFICACAO (id_usuario, mensagem, tipo, id_referencia, enviada_em)
+                SELECT id_usuario, CONCAT('O serviço "', ?, '" foi marcado como concluído pelo organizador!'), 'servico', ?, NOW()
+                FROM PARTICIPACAO
+                WHERE id_servico = ? AND situacao = 'aprovado'
+            `;
+            connection.query(sqlNotif, [title, id, id], () => {
+                connection.query(`SELECT id_usuario FROM PARTICIPACAO WHERE id_servico = ? AND situacao = 'aprovado'`, [id], (e, r) => {
+                    if (r && r.length > 0) notifyUsersWS(r.map(u => u.id_usuario), { type: 'notification_update' });
+                });
+            });
+
+            res.json({ mensagem: 'Serviço concluído com sucesso!' });
         });
     });
 });
@@ -677,12 +813,21 @@ app.post('/conversas/solicitar', (req, res) => {
             connection.query(insertMsg, [id_conversa, id_solicitante, mensagem_inicial.trim()]);
 
             const sqlNotif = `
-                INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
-                VALUES (?, 'Você recebeu uma nova solicitação de mensagem sobre um serviço.', NOW())
+                INSERT INTO NOTIFICACAO (id_usuario, mensagem, tipo, id_referencia, enviada_em)
+                SELECT
+                    ?,
+                    CONCAT(COALESCE(u.nome_exibicao, u.nome), ' enviou uma solicitação de mensagem sobre o serviço "', s.titulo, '".'),
+                    'mensagem',
+                    ?,
+                    NOW()
+                FROM USUARIO u, SERVICO s
+                WHERE u.id_usuario = ? AND s.id_servico = ?
             `;
-            connection.query(sqlNotif, [id_organizador]);
+            connection.query(sqlNotif, [id_organizador, id_conversa, id_solicitante, id_servico], () => {
+                notifyUsersWS([id_organizador], { type: 'notification_update' });
+            });
 
-            // Avisa o organizador via WebSocket na hora
+            // Alerts the owner via WebSocket in real-time
             notifyUsersWS([id_organizador], {
                 type: 'inbox_update',
                 id_conversa
@@ -771,13 +916,18 @@ app.put('/conversas/:id_conversa/status', (req, res) => {
 
             if (status === 'aceito') {
                 const sqlNotif = `
-                    INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
-                    VALUES (?, 'Sua solicitação de conversa foi aceita pelo organizador!', NOW())
+                    INSERT INTO NOTIFICACAO (id_usuario, mensagem, tipo, id_referencia, enviada_em)
+                    SELECT ?, CONCAT('Sua solicitação de conversa sobre "', s.titulo, '" foi aceita pelo organizador!'), 'mensagem', ?, NOW()
+                    FROM CONVERSA c
+                    JOIN SERVICO s ON c.id_servico = s.id_servico
+                    WHERE c.id_conversa = ?
                 `;
-                connection.query(sqlNotif, [id_solicitante]);
+                connection.query(sqlNotif, [id_solicitante, id_conversa, id_conversa], () => {
+                    notifyUsersWS([id_solicitante], { type: 'notification_update' });
+                });
             }
 
-            // Avisa ambos via WebSocket que o status mudou
+            // Alerts both via WebSocket about the status change
             notifyUsersWS([id_solicitante, id_organizador], {
                 type: 'chat_status',
                 id_conversa: Number(id_conversa),
@@ -864,6 +1014,58 @@ app.post('/mensagens', (req, res) => {
 
             res.json(newMsg);
         });
+    });
+});
+
+///////////////////
+// NOTIFICATIONS //
+///////////////////
+
+// Get user notifications
+app.get('/notificacoes/:id_usuario', (req, res) => {
+    const { id_usuario } = req.params;
+
+    const sql = `
+        SELECT * FROM NOTIFICACAO
+        WHERE id_usuario = ?
+        ORDER BY enviada_em DESC, id_notificacao DESC
+    `;
+
+    connection.query(sql, [id_usuario], (erro, resultados) => {
+        if (erro) {
+            console.log(erro);
+            return res.status(500).json({ mensagem: 'Erro ao buscar notificações.' });
+        }
+        res.json(resultados);
+    });
+});
+
+// Mark single notification as read
+app.put('/notificacoes/:id/lida', (req, res) => {
+    const { id } = req.params;
+
+    const sql = `UPDATE NOTIFICACAO SET lida = 1 WHERE id_notificacao = ?`;
+
+    connection.query(sql, [id], (erro) => {
+        if (erro) {
+            console.log(erro);
+            return res.status(500).json({ mensagem: 'Erro ao marcar notificação como lida.' });
+        }
+        res.json({ mensagem: 'Notificação marcada como lida.' });
+    });
+});
+
+// Clear all notifications for a user
+app.delete('/notificacoes/usuario/:id_usuario', (req, res) => {
+    const { id_usuario } = req.params;
+    const sql = `DELETE FROM NOTIFICACAO WHERE id_usuario = ?`;
+
+    connection.query(sql, [id_usuario], (erro) => {
+        if (erro) {
+            console.log(erro);
+            return res.status(500).json({ mensagem: 'Erro ao limpar notificações.' });
+        }
+        res.json({ mensagem: 'Todas as notificações foram limpas.' });
     });
 });
 

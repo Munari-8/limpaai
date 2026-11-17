@@ -10,13 +10,16 @@ import ScreenWrapper from "../../components/ScreenWrapper";
 import ToggleList from "../../components/ToggleList";
 import TaskBox from "../../components/Serviços/TaskBox";
 import MuralMenu from "../../components/Serviços/MuralMenu";
+import TaskPopUp from "../../components/Serviços/TaskPopUp";
+
 import { API_URL } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 
-export default function MainMuralScreen() {
+export default function MainMuralScreen({ navigation, route }) {
     const { user } = useAuth();
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedTask, setSelectedTask] = useState(null);
 
     const loadTasks = async () => {
         if (!user?.id) return;
@@ -38,8 +41,48 @@ export default function MainMuralScreen() {
         loadTasks();
     }, [user?.id]);
 
+    const handleOpenTaskById = async (taskId) => {
+        const found = tasks.find(t => Number(t.id_servico) === Number(taskId));
+        if (found) {
+            setSelectedTask(found);
+        } else {
+            // Se não estiver na lista carregada, busca individualmente
+            try {
+                const response = await fetch(`${API_URL}/servicos?id_usuario=${user?.id}`);
+                const data = await response.json();
+                if (response.ok && Array.isArray(data)) {
+                    setTasks(data);
+                    const target = data.find(t => Number(t.id_servico) === Number(taskId));
+                    if (target) {
+                        setSelectedTask(target);
+                    } else {
+                        Alert.alert("Atenção", "Este serviço não está mais disponível ou foi removido.");
+                    }
+                }
+            } catch (e) {
+                console.log("Erro ao buscar serviço específico:", e);
+            }
+        }
+    };
+
+    useEffect(() => {
+        const targetId = route?.params?.openTaskId;
+        if (targetId) {
+            handleOpenTaskById(targetId);
+            navigation.setParams({ openTaskId: null });
+        }
+    }, [route?.params?.openTaskId, tasks]);
+
     const myTasks = tasks.filter(item => String(item.id_ofertante) === String(user?.id));
-    const otherTasks = tasks.filter(item => String(item.id_ofertante) !== String(user?.id));
+    const otherTasks = tasks.filter(item => {
+        if (String(item.id_ofertante) === String(user?.id)) return false;
+
+        const isFull = Number(item.inscritos_confirmados) >= Number(item.vagas_max);
+        const isAlreadyInvolved = item.minha_situacao === 'aprovado' || item.minha_situacao === 'pendente';
+
+        if (isFull && !isAlreadyInvolved) return false;
+        return true;
+    });
 
     return (
         <ScreenWrapper>
@@ -117,6 +160,34 @@ export default function MainMuralScreen() {
                 </ScrollView>
 
                 <MuralMenu onServiceCreated={loadTasks} />
+
+                {selectedTask && (
+                    <TaskPopUp
+                        visible={!!selectedTask}
+                        onClose={() => setSelectedTask(null)}
+                        idServico={selectedTask.id_servico}
+                        idOfertante={selectedTask.id_ofertante}
+                        name={selectedTask.titulo}
+                        rawTitle={selectedTask.titulo}
+                        description={selectedTask.descricao}
+                        taskType={selectedTask.tipo}
+                        date={selectedTask.data}
+                        rawDate={selectedTask.data}
+                        startTime={selectedTask.horario_inicio}
+                        endTime={selectedTask.horario_fim}
+                        address={selectedTask.endereco}
+                        latitude={selectedTask.latitude}
+                        longitude={selectedTask.longitude}
+                        image={selectedTask.imagens}
+                        personCount={selectedTask.inscritos_confirmados}
+                        personLimit={selectedTask.vagas_max}
+                        username={selectedTask.nome_ofertante}
+                        avatar={selectedTask.foto_ofertante}
+                        minhaSituacao={selectedTask.minha_situacao}
+                        edicaoSensivelUsada={selectedTask.edicao_sensivel_usada}
+                        onRefresh={loadTasks}
+                    />
+                )}
             </View>
         </ScreenWrapper>
     );

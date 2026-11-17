@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'flex-start',
         paddingHorizontal: '5%',
-        marginTop: 66.6,
+        marginTop: 75,
         marginBottom: 76
     },
     main: {

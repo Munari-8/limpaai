@@ -662,7 +662,7 @@ export default function EditTaskPopUp({ visible, onClose, onSuccess, taskData })
                         <View style={{ width: '100%', marginTop: 24, flexDirection: 'row', gap: 10 }}>
                             <Button
                                 text="Cancelar"
-                                color={Colors.b50}
+                                color={Colors.black}
                                 flex={true}
                                 onPress={onClose}
                                 disabled={loading}

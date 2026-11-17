@@ -18,6 +18,8 @@ import TaskRemoveUserPopUp from "./TaskRemoveUserPopUp";
 import EditTaskPopUp from "./EditTaskPopUp";
 import TaskForgivePopUp from "./TaskForgivePopUp";
 import TaskMessageRequestPopUp from "./TaskMessageRequestPopUp";
+import TaskOwnerCancelPopUp from "./TaskOwnerCancelPopUp";
+import TaskCompletePopUp from "./TaskCompletePopUp";
 
 import { API_URL } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -38,6 +40,79 @@ export default function TaskPopUp({
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [userToRemove, setUserToRemove] = useState(null);
     const [userToForgive, setUserToForgive] = useState(null);
+    const [isOwnerCancelOpen, setIsOwnerCancelOpen] = useState(false);
+    const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+
+    const hasTaskEnded = () => {
+        if (!rawDate) return false;
+        const cleanDate = String(rawDate).split('T')[0];
+        const [year, month, day] = cleanDate.split('-').map(Number);
+        if (!year || !month || !day) return false;
+
+        const targetTime = endTime || startTime || '23:59';
+        const [hours, minutes] = String(targetTime).split(':').map(Number);
+
+        const endDateTime = new Date(year, month - 1, day, hours || 23, minutes || 59, 0);
+        return new Date() >= endDateTime;
+    };
+
+    const canComplete = hasTaskEnded();
+
+    const handleOwnerCancelTask = async (reason) => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${API_URL}/servicos/${idServico}/cancelar`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_ofertante: user?.id,
+                    reason: reason
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                Alert.alert('Serviço cancelado', 'Os participantes inscritos foram notificados.');
+                setIsOwnerCancelOpen(false);
+                if (onRefresh) onRefresh();
+                onClose();
+            } else {
+                Alert.alert('Erro', data.mensagem || 'Não foi possível cancelar o serviço.');
+            }
+        } catch (error) {
+            Alert.alert('Erro de conexão', 'Não foi possível contatar o servidor.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCompleteTask = async (presences) => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${API_URL}/servicos/${idServico}/concluir`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_ofertante: user?.id,
+                    presences
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                Alert.alert('Concluído!', 'O serviço foi concluído e as presenças foram registradas.');
+                setIsCompleteModalOpen(false);
+                if (onRefresh) onRefresh();
+                onClose();
+            } else {
+                Alert.alert('Erro', data.mensagem || 'Não foi possível concluir o serviço.');
+            }
+        } catch (error) {
+            Alert.alert('Erro de conexão', 'Não foi possível contatar o servidor.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleRemoveParticipant = async (reason) => {
         if (!userToRemove) return;
@@ -669,15 +744,35 @@ export default function TaskPopUp({
                                                 ))}
                                         </View>
                                     )}
+                                    <View style={{ width: '100%', gap: 10, marginTop: 12 }}>
+                                        {canComplete && (
+                                            <View style={{ flexDirection: 'row', width: '100%' }}>
+                                                <Button
+                                                    text={loading ? 'Carregando...' : 'Concluir Serviço'}
+                                                    color={color}
+                                                    flex={true}
+                                                    onPress={() => setIsCompleteModalOpen(true)}
+                                                    disabled={loading}
+                                                />
+                                            </View>
+                                        )}
 
-                                    <View style={[styles.tag, { marginTop: 12 }]}>
-                                        <Button
-                                            text={loading ? 'Carregando...' : 'Editar Serviço'}
-                                            color={color}
-                                            flex={true}
-                                            onPress={() => setIsEditModalOpen(true)}
-                                            disabled={loading}
-                                        />
+                                        <View style={{ flexDirection: 'row', gap: 10, width: '100%' }}>
+                                            <Button
+                                                text="Cancelar Serviço"
+                                                color={Colors.plastico}
+                                                flex={true}
+                                                onPress={() => setIsOwnerCancelOpen(true)}
+                                                disabled={loading}
+                                            />
+                                            <Button
+                                                text={loading ? 'Carregando...' : 'Editar Serviço'}
+                                                color={Colors.black}
+                                                flex={true}
+                                                onPress={() => setIsEditModalOpen(true)}
+                                                disabled={loading}
+                                            />
+                                        </View>
                                     </View>
                                 </View>
                             ) : (
@@ -852,6 +947,26 @@ export default function TaskPopUp({
                 </View>
             </View>
         </Modal>
+
+        <TaskOwnerCancelPopUp
+            visible={isOwnerCancelOpen}
+            onClose={() => setIsOwnerCancelOpen(false)}
+            name={name}
+            onConfirm={handleOwnerCancelTask}
+            loading={loading}
+        />
+
+        <TaskCompletePopUp
+            visible={isCompleteModalOpen}
+            onClose={() => setIsCompleteModalOpen(false)}
+            name={name}
+            approvedUsers={participations.filter(p => p.situacao === 'aprovado')}
+            avatarPlaceholder={avatarPlaceholder}
+            lightColor={lightColor}
+            color={color}
+            onConfirm={handleCompleteTask}
+            loading={loading}
+        />
         </>
     );
 }
