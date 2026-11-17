@@ -4,6 +4,7 @@ import {
     FlatList, Dimensions, ScrollView, Alert, Platform, Linking
 } from "react-native";
 import { WebView } from "react-native-webview";
+import { useNavigation } from "@react-navigation/native";
 
 // Expo
 import { Image } from "expo-image";
@@ -16,6 +17,7 @@ import TaskCancelPopUp from "./TaskCancelPopUp";
 import TaskRemoveUserPopUp from "./TaskRemoveUserPopUp";
 import EditTaskPopUp from "./EditTaskPopUp";
 import TaskForgivePopUp from "./TaskForgivePopUp";
+import TaskMessageRequestPopUp from "./TaskMessageRequestPopUp";
 
 import { API_URL } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -29,6 +31,8 @@ export default function TaskPopUp({
 }){
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
+
+    const navigation = useNavigation();
 
     // TaskCancelPopUp ctrl
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -248,6 +252,46 @@ export default function TaskPopUp({
     // EditTaskPopUp ctrl
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+    // TaskMessageRequestPopUp ctrl
+    const [isMsgReqModalOpen, setIsMsgReqModalOpen] = useState(false);
+
+    const handleSendMessageRequest = async (initialMessage) => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${API_URL}/conversas/solicitar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_servico: idServico,
+                    id_solicitante: user?.id,
+                    id_organizador: idOfertante,
+                    mensagem_inicial: initialMessage
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setIsMsgReqModalOpen(false);
+                onClose();
+                navigation.navigate('Chat', {
+                    idConversa: data.id_conversa,
+                    otherUserName: username,
+                    otherUserAvatar: avatar,
+                    taskType: taskType ?  taskType.toLowerCase() : '',
+                    status: data.status,
+                    isOwner: false
+                });
+            } else {
+                Alert.alert('Atenção', data.mensagem || 'Não foi possível iniciar a conversa.');
+            }
+        } catch (error) {
+            Alert.alert('Erro de conexão', 'Não foi possível contatar o servidor.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <>
         <Modal
@@ -302,6 +346,15 @@ export default function TaskPopUp({
                     if (onRefresh) onRefresh();
                     onClose();
                 }}
+            />
+
+            <TaskMessageRequestPopUp
+                visible={isMsgReqModalOpen}
+                onClose={() => setIsMsgReqModalOpen(false)}
+                ownerName={username}
+                taskName={name}
+                onConfirm={handleSendMessageRequest}
+                loading={loading}
             />
             
             <View style={styles.bgShadow}>
@@ -638,7 +691,7 @@ export default function TaskPopUp({
                                                 onPress={() => setIsCancelModalOpen(true)}
                                                 disabled={loading}
                                             />
-                                            <TouchableOpacity>
+                                            <TouchableOpacity onPress={() => setIsMsgReqModalOpen(true)}>
                                                 <MaterialCommunityIcons name="message-text" size={40} color={color} />
                                             </TouchableOpacity>
                                         </View>
@@ -653,7 +706,7 @@ export default function TaskPopUp({
                                                 onPress={() => setIsCancelModalOpen(true)}
                                                 disabled={loading}
                                             />
-                                            <TouchableOpacity>
+                                            <TouchableOpacity onPress={() => setIsMsgReqModalOpen(true)}>
                                                 <MaterialCommunityIcons name="message-text" size={40} color={color} />
                                             </TouchableOpacity>
                                         </View>
@@ -690,7 +743,7 @@ export default function TaskPopUp({
                                                 onPress={handleRequestParticipation}
                                                 disabled={loading}
                                             />
-                                            <TouchableOpacity>
+                                            <TouchableOpacity onPress={() => setIsMsgReqModalOpen(true)}>
                                                 <MaterialCommunityIcons name="message-text" size={40} color={color} />
                                             </TouchableOpacity>
                                         </View>

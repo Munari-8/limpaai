@@ -11,14 +11,12 @@ git clone https://github.com/Munari-8/limpaai.git
 CREATE DATABASE limpaai;
 USE limpaai;
 
--- 1. Criação da tabela CATEGORIA_USUARIO
 CREATE TABLE CATEGORIA_USUARIO (
     id_categoria_usuario INT(11) NOT NULL AUTO_INCREMENT,
     nome_categoria VARCHAR(32) NOT NULL,
     PRIMARY KEY (id_categoria_usuario)
 ) ENGINE=InnoDB;
 
--- 2. Criação da tabela RESIDUO
 CREATE TABLE RESIDUO (
     id_residuo INT(11) NOT NULL AUTO_INCREMENT,
     nome VARCHAR(88) NOT NULL,
@@ -28,7 +26,6 @@ CREATE TABLE RESIDUO (
     PRIMARY KEY (id_residuo)
 ) ENGINE=InnoDB;
 
--- 3. Criação da tabela USUARIO
 CREATE TABLE USUARIO (
     id_usuario INT(11) NOT NULL AUTO_INCREMENT,
     id_categoria INT(11) NOT NULL,
@@ -49,7 +46,6 @@ CREATE TABLE USUARIO (
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- 4. Criação da tabela SERVICO
 CREATE TABLE SERVICO (
     id_servico INT(11) NOT NULL AUTO_INCREMENT,
     id_ofertante INT(11) NOT NULL,
@@ -72,7 +68,6 @@ CREATE TABLE SERVICO (
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- 5. Criação da tabela NOTIFICACAO
 CREATE TABLE NOTIFICACAO (
     id_notificacao INT(11) NOT NULL AUTO_INCREMENT,
     id_usuario INT(11) NOT NULL,
@@ -85,7 +80,6 @@ CREATE TABLE NOTIFICACAO (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
--- 6. Criação da tabela PARTICIPACAO
 CREATE TABLE PARTICIPACAO (
     id_participacao INT(11) NOT NULL AUTO_INCREMENT,
     id_usuario INT(11) NOT NULL,
@@ -100,6 +94,31 @@ CREATE TABLE PARTICIPACAO (
         REFERENCES SERVICO (id_servico)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
+
+CREATE TABLE CONVERSA (
+    id_conversa INT AUTO_INCREMENT PRIMARY KEY,
+    id_servico INT NOT NULL,
+    id_solicitante INT NOT NULL,
+    id_organizador INT NOT NULL,
+    status ENUM('pendente', 'aceito', 'recusado') NOT NULL DEFAULT 'pendente',
+    criada_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizada_em DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_chat_servico (id_servico, id_solicitante, id_organizador),
+    FOREIGN KEY (id_servico) REFERENCES USUARIO(id_servico) ON DELETE CASCADE,
+    FOREIGN KEY (id_solicitante) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_organizador) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
+);
+
+CREATE TABLE MENSAGEM (
+    id_mensagem INT AUTO_INCREMENT PRIMARY KEY,
+    id_conversa INT NOT NULL,
+    id_remetente INT NOT NULL,
+    conteudo TEXT NOT NULL,
+    lida TINYINT(1) NOT NULL DEFAULT 0,
+    enviada_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_conversa) REFERENCES CONVERSA(id_conversa) ON DELETE CASCADE,
+    FOREIGN KEY (id_remetente) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
+);
  
 INSERT INTO CATEGORIA_USUARIO (nome_categoria) VALUES ('Comum');
 ```

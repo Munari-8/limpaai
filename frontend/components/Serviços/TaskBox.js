@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
 
         padding: '5%',
-        borderRadius: 16
+        borderRadius: 24
     },
     textContainer: {
         flex: 1

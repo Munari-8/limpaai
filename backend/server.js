@@ -1,4 +1,6 @@
 const express = require('express');
+const http = require('http');
+const { WebSocketServer, WebSocket } = require('ws');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
@@ -7,6 +9,60 @@ const path = require('path');
 const connection = require('./dbconfig');
 
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+
+// Map 2 keep track of which sockets belong 2 each connected user
+const connectedUsers = new Map();
+
+wss.on('connection', (socket) => {
+    socket.on('message', (raw) => {
+        let data;
+
+        try {
+            data = JSON.parse(raw.toString());
+        } catch {
+            return;
+        }
+
+        // Registers the connected user to the WebSocket
+        if (data.type === 'regiter' && data.userId) {
+            const uid = String(data.userId);
+            socket.userId = uid;
+
+            if (!connectedUsers.has(uid)) {
+                connectedUsers.set(uid, new Set());
+            }
+            connectedUsers.get(uid).add(socket);
+        }
+    });
+
+    socket.on('close', () => {
+        if (socket.userId && connectedUsers.has(socket.userId)) {
+            connectedUsers.get(socket.userId).delete(socket);
+            if (connectedUsers.get(socket.userId).size === 0) {
+                connectedUsers.delete(socket.userId);
+            }
+        }
+    });
+});
+
+// Helper to send a real-time event only 2 the chat participants
+const notifyUsersWS = (userIds, payload) => {
+    const json = JSON.stringify(payload);
+
+    userIds.forEach((id) => {
+        const sockets = connectedUsers.get(String(id));
+
+        if (sockets) {
+            sockets.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(json);
+                }
+            });
+        }
+    });
+};
 
 app.use(cors());
 app.use(express.json());
@@ -565,8 +621,254 @@ app.delete('/participacoes/perdoar', (req, res) => {
     });
 });
 
+//////////////
+// MESSAGES //
+//////////////
+
+// Request to chat w/ task owner
+app.post('/conversas/solicitar', (req, res) => {
+    const { id_servico, id_solicitante, id_organizador, mensagem_inicial } = req.body;
+
+    if (!mensagem_inicial || !mensagem_inicial.trim()) {
+        return res.status(400).json({ mensagem: 'Escreva uma mensagem inicial para solicitar o chat.' });
+    }
+
+    const checkSql = `
+        SELECT * FROM CONVERSA
+        WHERE id_servico = ? AND id_solicitante = ? AND id_organizador = ?
+    `;
+
+    connection.query(checkSql, [id_servico, id_solicitante, id_organizador], (err, rows) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ mensagem: 'Erro ao verificar conversa.' });
+        }
+
+        if (rows && rows.length > 0) {
+            const chat = rows[0];
+            if (chat.status === 'recusado') {
+                return res.status(403).json({ mensagem: 'Sua solicitação de conversa foi recusada pelo organizador.' });
+            }
+
+            return res.json({
+                mensagem: 'Conversa já existente.',
+                id_conversa: chat.id_conversa,
+                status: chat.status
+            });
+        }
+
+        const insertChat = `
+            INSERT INTO CONVERSA (id_servico, id_solicitante, id_organizador, status, criada_em, atualizada_em)
+            VALUES (?, ?, ?, 'pendente', NOW(), NOW())
+        `;
+
+        connection.query(insertChat, [id_servico, id_solicitante, id_organizador], (errInsert, result) => {
+            if (errInsert) {
+                console.log(errInsert);
+                return res.status(500).json({ mensagem: 'Erro ao solicitar conversa.' });
+            }
+
+            const id_conversa = result.insertId;
+
+            const insertMsg = `
+                INSERT INTO MENSAGEM (id_conversa, id_remetente, conteudo, lida, enviada_em)
+                VALUES (?, ?, ?, 0, NOW())
+            `;
+            connection.query(insertMsg, [id_conversa, id_solicitante, mensagem_inicial.trim()]);
+
+            const sqlNotif = `
+                INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
+                VALUES (?, 'Você recebeu uma nova solicitação de mensagem sobre um serviço.', NOW())
+            `;
+            connection.query(sqlNotif, [id_organizador]);
+
+            // Avisa o organizador via WebSocket na hora
+            notifyUsersWS([id_organizador], {
+                type: 'inbox_update',
+                id_conversa
+            });
+
+            res.json({
+                mensagem: 'Solicitação de mensagem enviada!',
+                id_conversa,
+                status: 'pendente'
+            });
+        });
+    });
+});
+
+// Get user chats
+app.get('/conversas/:id_usuario', (req, res) => {
+    const { id_usuario } = req.params;
+
+    const sql = `
+        SELECT
+            c.*,
+            s.titulo AS titulo_servico,
+            s.tipo AS tipo_servico,
+            u_sol.nome AS nome_solicitante,
+            u_sol.nome_exibicao AS exibicao_solicitante,
+            u_sol.foto_perfil AS foto_solicitante,
+            u_org.nome AS nome_organizador,
+            u_org.nome_exibicao AS exibicao_organizador,
+            u_org.foto_perfil AS foto_organizador,
+            (
+                SELECT conteudo FROM MENSAGEM
+                WHERE id_conversa = c.id_conversa
+                ORDER BY enviada_em DESC, id_mensagem DESC LIMIT 1
+            ) AS ultima_mensagem,
+            (
+                SELECT id_remetente FROM MENSAGEM
+                WHERE id_conversa = c.id_conversa
+                ORDER BY enviada_em DESC, id_mensagem DESC LIMIT 1
+            ) AS ultimo_remetente,
+            (
+                SELECT enviada_em FROM MENSAGEM
+                WHERE id_conversa = c.id_conversa
+                ORDER BY enviada_em DESC, id_mensagem DESC LIMIT 1
+            ) AS data_ultima_mensagem,
+            (
+                SELECT COUNT(*) FROM MENSAGEM
+                WHERE id_conversa = c.id_conversa AND id_remetente != ? AND lida = 0
+            ) AS nao_lidas
+        FROM CONVERSA c
+        JOIN SERVICO s ON c.id_servico = s.id_servico
+        JOIN USUARIO u_sol ON c.id_solicitante = u_sol.id_usuario
+        JOIN USUARIO u_org ON c.id_organizador = u_org.id_usuario
+        WHERE (c.id_solicitante = ? OR c.id_organizador = ?)
+          AND c.status != 'recusado'
+        ORDER BY COALESCE(data_ultima_mensagem, c.criada_em) DESC
+    `;
+
+    connection.query(sql, [id_usuario, id_usuario, id_usuario], (error, results) => {
+        if (error) {
+            console.log(error);
+            return res.status(500).json({ mensagem: 'Erro ao carregar conversas.' });
+        }
+        res.json(results);
+    });
+});
+
+// Accept / refuse chat requests (Owner)
+app.put('/conversas/:id_conversa/status', (req, res) => {
+    const { id_conversa } = req.params;
+    const { status } = req.body; // 'aceito' or 'recusado'
+
+    const getSql = `SELECT id_solicitante, id_organizador FROM CONVERSA WHERE id_conversa = ?`;
+    connection.query(getSql, [id_conversa], (errGet, rows) => {
+        if (errGet || !rows || rows.length === 0) {
+            return res.status(404).json({ mensagem: 'Conversa não encontrada.' });
+        }
+
+        const { id_solicitante, id_organizador } = rows[0];
+        const sql = `UPDATE CONVERSA SET status = ?, atualizada_em = NOW() WHERE id_conversa = ?`;
+
+        connection.query(sql, [status, id_conversa], (error) => {
+            if (error) {
+                console.log(error);
+                return res.status(500).json({ mensagem: 'Erro ao atualizar conversa.' });
+            }
+
+            if (status === 'aceito') {
+                const sqlNotif = `
+                    INSERT INTO NOTIFICACAO (id_usuario, mensagem, enviada_em)
+                    VALUES (?, 'Sua solicitação de conversa foi aceita pelo organizador!', NOW())
+                `;
+                connection.query(sqlNotif, [id_solicitante]);
+            }
+
+            // Avisa ambos via WebSocket que o status mudou
+            notifyUsersWS([id_solicitante, id_organizador], {
+                type: 'chat_status',
+                id_conversa: Number(id_conversa),
+                status
+            });
+
+            res.json({ mensagem: `Conversa ${status}.` });
+        });
+    });
+});
+
+// Get messages from a chat + set received as read
+app.get('/mensagens/:id_conversa', (req, res) => {
+    const { id_conversa } = req.params;
+    const { id_usuario } = req.query;
+
+    if (id_usuario) {
+        const markRead = `UPDATE MENSAGEM SET lida = 1 WHERE id_conversa = ? AND id_remetente != ?`;
+        connection.query(markRead, [id_conversa, id_usuario]);
+    }
+
+    const sql = `
+        SELECT * FROM MENSAGEM
+        WHERE id_conversa = ?
+        ORDER BY enviada_em ASC, id_mensagem ASC
+    `;
+
+    connection.query(sql, [id_conversa], (error, results) => {
+        if (error) {
+            console.log(error);
+            return res.status(500).json({ mensagem: 'Erro ao buscar mensagens.' });
+        }
+        res.json(results);
+    });
+});
+
+// Send a new message in chat
+app.post('/mensagens', (req, res) => {
+    const { id_conversa, id_remetente, conteudo } = req.body;
+
+    if (!conteudo || !conteudo.trim()) {
+        return res.status(400).json({ mensagem: 'A mensagem não pode estar vazia.' });
+    }
+
+    const checkSql = `SELECT status, id_solicitante, id_organizador FROM CONVERSA WHERE id_conversa = ?`;
+
+    connection.query(checkSql, [id_conversa], (err, rows) => {
+        if (err || !rows || rows.length === 0) {
+            return res.status(404).json({ mensagem: 'Conversa não encontrada' });
+        }
+
+        const conv = rows[0];
+        if (conv.status !== 'aceito') {
+            return res.status(403).json({ mensagem: 'Aguarde o organizador aceitar a solicitação para enviar mais mensagens.' });
+        }
+
+        const sql = `
+            INSERT INTO MENSAGEM (id_conversa, id_remetente, conteudo, lida, enviada_em)
+            VALUES (?, ?, ?, 0, NOW())
+        `;
+
+        connection.query(sql, [id_conversa, id_remetente, conteudo.trim()], (error, result) => {
+            if (error) {
+                console.log(error);
+                return res.status(500).json({ mensagem: 'Erro ao enviar mensagem.' });
+            }
+
+            connection.query(`UPDATE CONVERSA SET atualizada_em = NOW() WHERE id_conversa = ?`, [id_conversa]);
+
+            const newMsg = {
+                id_mensagem: result.insertId,
+                id_conversa: Number(id_conversa),
+                id_remetente: Number(id_remetente),
+                conteudo: conteudo.trim(),
+                lida: 0,
+                enviada_em: new Date().toISOString()
+            };
+
+            // Entrega em tempo real via WebSocket para os dois participantes
+            notifyUsersWS([conv.id_solicitante, conv.id_organizador], {
+                type: 'new_message',
+                message: newMsg
+            });
+
+            res.json(newMsg);
+        });
+    });
+});
+
 ////////////////////
-// Exclusive mods //
+// EXCLUSIVE MODS //
 ////////////////////
 
 // Remove user
@@ -629,6 +931,6 @@ app.delete('/servicos/flush', (req, res) => {
     });
 });
 
-app.listen(3000, () => {
+server.listen(3000, () => {
     console.log('Servidor rodando na porta 3000');
 });

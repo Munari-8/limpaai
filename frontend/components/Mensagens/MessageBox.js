@@ -9,23 +9,41 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors, Fonts } from "../Theme";
 import { Image } from "expo-image";
 import UserType from "../UserType";
+import { API_URL } from "../../services/api";
 
-export default function MessageBox({ wasViewed=false, userName, taskType, userIcon, lastMessage, submittedByUser, data }) {
+export default function MessageBox({
+    wasViewed = false, userName, taskType, userIcon, lastMessage, submittedByUser,
+    data, idConversa, status, isOwner, onRefresh
+}) {
     const navigation = useNavigation();
 
     const cardColor = wasViewed ? Colors.greenLA1 : Colors.b10;
     const varColor = wasViewed ? Colors.white : Colors.black;
-    const avatarSource = wasViewed ? require('../../assets/person/personGreen.svg') : require('../../assets/person/personBlack.svg');
-    const submitted = submittedByUser ? 'arrow-top-right' : 'arrow-bottom-left'
+    const avatarPlaceholder = wasViewed
+        ? require('../../assets/person/personGreen.svg')
+        : require('../../assets/person/personBlack.svg');
+    const submitted = submittedByUser ? 'arrow-top-right' : 'arrow-bottom-left';
+
+    const formatUri = (uri) => (uri && (uri.startsWith('http') || uri.startsWith('file://'))) ? uri : `${API_URL}${uri}`;
 
     return (
-        <TouchableOpacity onPress={() => navigation.navigate('Chat')}>
+        <TouchableOpacity
+            style={{ width: '100%' }}
+            onPress={() => navigation.navigate('Chat', {
+                idConversa,
+                otherUserName: userName,
+                otherUserAvatar: userIcon,
+                taskType,
+                status,
+                isOwner
+            })}
+        >
             <View style={[styles.container, { backgroundColor: cardColor }]}>
                 <Image
-                    source={userIcon}
-                    placeholder={avatarSource}
+                    source={userIcon ? { uri: formatUri(userIcon) } : null}
+                    placeholder={avatarPlaceholder}
                     style={styles.avatar}
-                    contentFit="fill"
+                    contentFit="cover"
                     placeholderContentFit="cover"
                 />
 
@@ -42,8 +60,14 @@ export default function MessageBox({ wasViewed=false, userName, taskType, userIc
                         </View>
                     </View>
 
+                    {status === 'pendente' && (
+                        <Text style={[styles.pendingTag, { color: varColor }]}>
+                            {isOwner ? '• Solicitação de mensagem' : '• Aguardando aprovação'}
+                        </Text>
+                    )}
+
                     <View style={styles.subCon1}>
-                        <MaterialCommunityIcons name={submitted} size={24} color={varColor}/>
+                        <MaterialCommunityIcons name={submitted} size={24} color={varColor} />
 
                         <Text
                             style={[styles.content, { color: varColor }]}
@@ -71,17 +95,17 @@ const styles = StyleSheet.create({
     },
     textContainer: {
         flex: 1,
-        justifyContent: 'center',
-
+        justifyContent: 'center'
     },
     topRow: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     subCon1: {
         width: '100%',
+        
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center'
     },
     timeDate: {
         alignSelf: 'center',
@@ -90,19 +114,6 @@ const styles = StyleSheet.create({
 
         flexShrink: 0
     },
-    eventName: {
-        backgroundColor: Colors.b25,
-        borderRadius: 100,
-
-        paddingHorizontal: 12,
-        paddingVertical: 4,
-
-        marginLeft: '1%',
-
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-
     avatar: {
         width: 64,
         height: 64,
@@ -114,10 +125,6 @@ const styles = StyleSheet.create({
     },
 
     // Text
-    username: {
-        fontFamily: Fonts.bold,
-        fontSize: 18
-    },
     content: {
         fontFamily: Fonts.regular,
         fontSize: 15,
@@ -130,8 +137,10 @@ const styles = StyleSheet.create({
         
         opacity: 0.75
     },
-    eventText: {
-        fontFamily: Fonts.regular,
-        fontSize: 14
+    pendingTag: {
+        fontFamily: Fonts.bold,
+        fontSize: 12,
+
+        marginVertical: 2
     }
 })
