@@ -64,6 +64,39 @@ const notifyUsersWS = (userIds, payload) => {
     });
 };
 
+// Helper to set rank n update points in server
+const updateUserPoints = (id_usuario, deltaPontos, callback) => {
+    connection.query(
+        `SELECT pontos FROM USUARIO WHERE id_usuario = ?`,
+        [id_usuario],
+        (err, rows) => {
+            if (err || !rows || rows.length === 0) {
+                if (callback) callback(err);
+                return;
+            }
+
+            const newPoints = Math.max(0, Number(rows[0].pontos || 0) + deltaPontos);
+
+            let newRank = 'Bronze';
+            if (newPoints >= 450) {
+                newRank = 'Diamante';
+            } else if (newPoints >= 240) {
+                newRank = 'Ouro';
+            } else if (newPoints >= 90) {
+                newRank = 'Prata';
+            }
+
+            connection.query(
+                `UPDATE USUARIO SET pontos = ?, ranque = ? WHERE id_usuario = ?`,
+                [newPoints, newRank, id_usuario],
+                (errUpd) => {
+                    if (callback) callback(errUpd, { pontos: newPoints, ranque: newRank });
+                }
+            );
+        }
+    );
+};
+
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -75,7 +108,7 @@ const storage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
         const ext = path.extname(file.originalname);
-        cb(null, Date.now() + ext);
+        cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
     }
 });
 const upload = multer({ storage: storage });
@@ -375,62 +408,71 @@ app.get('/servicos', (req, res) => {
 app.post('/participacoes', (req, res) => {
     const { id_usuario, id_servico } = req.body;
 
-    const checkVagasSql = `
-        SELECT 
-            s.vagas_max,
-            s.status,
-            COUNT(CASE WHEN p.situacao = 'aprovado' THEN 1 END) AS inscritos_confirmados
-        FROM SERVICO s
-        LEFT JOIN PARTICIPACAO p ON s.id_servico = p.id_servico
-        WHERE s.id_servico = ?
-        GROUP BY s.id_servico
-    `;
-    connection.query(checkVagasSql, [id_servico], (errVagas, taskRows) => {
-        if (errVagas || !taskRows || taskRows.length === 0) {
-            return res.status(400).json({ mensagem: 'Serviço não encontrado.' })
+    connect.query(`SELECT suspenso_ate FROM USUARIO WHERE id_usuario = ?`, [id_usuario], (errSusp, userRows) => {
+        if (userRows && userRows[0]?.suspenso_ate && new Date(userRows[0].suspenso_ate) > new Date()) {
+            const dataFim = new Date(userRows[0].suspenso_ate).toLocaleDateString('pt-BR');
+            return res.status(403).json({
+                mensagem: `Sua conta está suspensa de participar de serviços até ${dataFim} devido a cancelamentos recorrentes.`
+            });
         }
 
-        const srv = taskRows[0]
-        if (srv.status !== 'aberto') {
-            return res.status(400).json({ mensagem: 'Este serviço não está mais aberto.' });
-        }
-
-        if (Number(srv.inscritos_confirmados) >= Number(srv.vagas_max)) {
-            return res.status(400).json({ mensagem: 'Este serviço já atingiu o limite máximo de participantes.' });
-        }
-
-        const checkSql = `SELECT * FROM PARTICIPACAO WHERE id_usuario = ? AND id_servico = ?`;
-        connection.query(checkSql, [id_usuario, id_servico], (err, rows) => {
-            if (rows && rows.length > 0) {
-                return res.status(400).json({ mensagem: 'Você já solicitou participação neste serviço' });
+        const checkVagasSql = `
+            SELECT 
+                s.vagas_max,
+                s.status,
+                COUNT(CASE WHEN p.situacao = 'aprovado' THEN 1 END) AS inscritos_confirmados
+            FROM SERVICO s
+            LEFT JOIN PARTICIPACAO p ON s.id_servico = p.id_servico
+            WHERE s.id_servico = ?
+            GROUP BY s.id_servico
+        `;
+        connection.query(checkVagasSql, [id_servico], (errVagas, taskRows) => {
+            if (errVagas || !taskRows || taskRows.length === 0) {
+                return res.status(400).json({ mensagem: 'Serviço não encontrado.' })
             }
 
-            const sql = `
-                INSERT INTO PARTICIPACAO (id_usuario, id_servico, situacao, inscrito_em)
-                VALUES (?, ?, 'pendente', NOW())
-            `;
+            const srv = taskRows[0]
+            if (srv.status !== 'aberto') {
+                return res.status(400).json({ mensagem: 'Este serviço não está mais aberto.' });
+            }
 
-            connection.query(sql, [id_usuario, id_servico], (erro) => {
-                if (erro) {
-                    console.log(erro);
-                    return res.status(500).json({ mensagem: 'Erro ao solicitar participação' });
+            if (Number(srv.inscritos_confirmados) >= Number(srv.vagas_max)) {
+                return res.status(400).json({ mensagem: 'Este serviço já atingiu o limite máximo de participantes.' });
+            }
+
+            const checkSql = `SELECT * FROM PARTICIPACAO WHERE id_usuario = ? AND id_servico = ?`;
+            connection.query(checkSql, [id_usuario, id_servico], (err, rows) => {
+                if (rows && rows.length > 0) {
+                    return res.status(400).json({ mensagem: 'Você já solicitou participação neste serviço' });
                 }
 
-                const sqlNotif = `
-                    INSERT INTO NOTIFICACAO (id_usuario, mensagem, tipo, id_referencia, enviada_em)
-                    SELECT id_ofertante, CONCAT('Novo pedido de participação no serviço "', titulo, '".'), 'servico', ?, NOW()
-                    FROM SERVICO WHERE id_servico = ?
+                const sql = `
+                    INSERT INTO PARTICIPACAO (id_usuario, id_servico, situacao, inscrito_em)
+                    VALUES (?, ?, 'pendente', NOW())
                 `;
-                connection.query(sqlNotif, [id_servico, id_servico], () => {
-                    connection.query(`SELECT id_ofertante FROM SERVICO WHERE id_servico = ?`, [id_servico], (e, r) => {
-                        if (r && r[0]) notifyUsersWS([r[0].id_ofertante], { type: 'notification_update' });
-                    });
-                });
 
-                res.json({ mensagem: 'Solicitação enviada com sucesso!' });
+                connection.query(sql, [id_usuario, id_servico], (erro) => {
+                    if (erro) {
+                        console.log(erro);
+                        return res.status(500).json({ mensagem: 'Erro ao solicitar participação' });
+                    }
+
+                    const sqlNotif = `
+                        INSERT INTO NOTIFICACAO (id_usuario, mensagem, tipo, id_referencia, enviada_em)
+                        SELECT id_ofertante, CONCAT('Novo pedido de participação no serviço "', titulo, '".'), 'servico', ?, NOW()
+                        FROM SERVICO WHERE id_servico = ?
+                    `;
+                    connection.query(sqlNotif, [id_servico, id_servico], () => {
+                        connection.query(`SELECT id_ofertante FROM SERVICO WHERE id_servico = ?`, [id_servico], (e, r) => {
+                            if (r && r[0]) notifyUsersWS([r[0].id_ofertante], { type: 'notification_update' });
+                        });
+                    });
+
+                    res.json({ mensagem: 'Solicitação enviada com sucesso!' });
+                });
             });
         });
-    });
+    })
 });
 
 // Edit task
@@ -567,13 +609,40 @@ app.get('/servicos/:id/participacoes', (req, res) => {
 app.delete('/participacoes', (req, res) => {
     const { id_usuario, id_servico } = req.body;
 
-    const sql = `UPDATE PARTICIPACAO SET situacao = 'cancelado' WHERE id_usuario = ? AND id_servico = ?`;
+    const sql = `
+        UPDATE PARTICIPACAO 
+        SET situacao = 'cancelado', cancelado_em = NOW() 
+        WHERE id_usuario = ? AND id_servico = ?
+    `;
 
-    connection.query(sql, [id_usuario, id_servico], (erro, resultado) => {
+    connection.query(sql, [id_usuario, id_servico], (erro) => {
         if (erro) {
             return res.status(500).json({ mensagem: 'Erro ao cancelar participação' });
         }
-        res.json({ mensagem: 'Participação cancelada.' });
+
+        atualizarPontosUsuario(id_usuario, -3);
+
+        const checkCancelsSql = `
+            SELECT COUNT(*) AS total_cancelamentos
+            FROM PARTICIPACAO
+            WHERE id_usuario = ?
+              AND situacao = 'cancelado'
+              AND cancelado_em >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+        `;
+
+        connection.query(checkCancelsSql, [id_usuario], (errCheck, rows) => {
+            if (!errCheck && rows && rows[0].total_cancelamentos >= 3) {
+                connection.query(
+                    `UPDATE USUARIO SET suspenso_ate = DATE_ADD(NOW(), INTERVAL 15 DAY) WHERE id_usuario = ?`,
+                    [id_usuario]
+                );
+                return res.json({
+                    mensagem: 'Participação cancelada (-3 pts). Você atingiu 3 cancelamentos em 2 semanas e foi suspenso por 15 dias.'
+                });
+            }
+
+            res.json({ mensagem: 'Participação cancelada (-3 pontos).' });
+        });
     });
 });
 
@@ -696,6 +765,7 @@ app.put('/servicos/:id/cancelar', (req, res) => {
                 });
             });
 
+            updateUserPoints(id_ofertante, -9);
             res.json({ mensagem: 'Serviço cancelado com sucesso.' });
         });
     });
@@ -729,11 +799,11 @@ app.put('/servicos/:id/concluir', (req, res) => {
                         [presenceStatus, p.id_participacao, id],
                         (errUpdatePart) => {
                             if (!errUpdatePart && presenceStatus === 'presente') {
-                                // Incrementa o contador de serviços realizados do usuário
                                 connection.query(
                                     `UPDATE USUARIO SET servicos_realizados = servicos_realizados + 1 WHERE id_usuario = ?`,
                                     [p.id_usuario]
                                 );
+                                updateUserPoints(p.id_usuario, 30);
                             }
                         }
                     );
@@ -752,6 +822,7 @@ app.put('/servicos/:id/concluir', (req, res) => {
                 });
             });
 
+            updateUserPoints(id_ofertante, 30);
             res.json({ mensagem: 'Serviço concluído com sucesso!' });
         });
     });
@@ -1069,6 +1140,88 @@ app.delete('/notificacoes/usuario/:id_usuario', (req, res) => {
     });
 });
 
+////////////
+// WASTES //
+////////////
+
+// Create Waste Suggestion
+app.post('/sugestoes-residuos', upload.array('images', 3), (req, res) => {
+    const { id_usuario, nome, tipo, observacoes } = req.body;
+    const imagePaths = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+
+    const sql = `
+        INSERT INTO SUGESTAO_RESIDUO (id_usuario, nome, tipo, observacoes, foto_residuos, status, criada_em)
+        VALUES (?, ?, ?, ?, ?, 'pending', NOW())
+    `;
+    connection.query(sql, [id_usuario, nome, tipo, observacoes || null, JSON.stringify(imagePaths)], (err, result) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ mensagem: 'Erro ao enviar sugestão de resíduo.' });
+        }
+        res.json({
+            mensagem: 'Sugestão enviada com sucesso!',
+            id_sugestao: result.insertId
+        });
+    });
+});
+
+// List suggestions from a specific user
+app.get('/sugestoes-residuos/usuario/:id_usuario', (req, res) => {
+    const { id_usuario } = req.params;
+
+    const sql = `SELECT * FROM SUGESTAO_RESIDUO WHERE id_usuario = ? ORDER BY criada_em DESC`;
+    connection.query(sql, [id_usuario], (err, rows) => {
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ mensagem: 'Erro ao buscar sugestões.' });
+        }
+        res.json(rows);
+    });
+});
+
+// Approve or reject a suggestion (Adds +15 points if approved)
+app.put('/sugestoes-residuos/:id/status', (req, res) => {
+    const { id } = req.params;
+    const { status, motivo_reprovacao } = req.body;
+
+    const getSql = `SELECT id_usuario, nome, status FROM SUGESTAO_RESIDUO WHERE id_sugestao = ?`;
+    connection.query(getSql, [id], (err, rows) => {
+        if (err || !rows || rows.length === 0) {
+            return res.status(404).json({ mensagem: 'Sugestão não encontrada.' });
+        }
+
+        const sug = rows[0];
+        const updateSql = `UPDATE SUGESTAO_RESIDUO SET status = ?, motivo_reprovacao = ? WHERE id_sugestao = ?`;
+        connection.query(updateSql, [status, motivo_reprovacao || null, id], (errUpd) => {
+            if (errUpd) {
+                return res.status(500).json({ mensagem: 'Erro ao atualizar status da sugestão.' });
+            }
+
+            if (status === 'approved' && sug.status !== 'approved') {
+                updateUserPoints(sug.id_usuario, 15);
+
+                const notifSql = `
+                    INSERT INTO NOTIFICACAO (id_usuario, mensagem, tipo, enviada_em)
+                    VALUES (?, CONCAT('Sua sugestão de resíduo "', ?, '" foi aprovada! Você ganhou +15 pontos.'), 'servico', NOW())
+                `;
+                connection.query(notifSql, [sug.id_usuario, sug.nome], () => {
+                    notifyUsersWS([sug.id_usuario], { type: 'notification_update' });
+                });
+            } else if (status === 'disapproved') {
+                const notifSql = `
+                    INSERT INTO NOTIFICACAO (id_usuario, mensagem, tipo, enviada_em)
+                    VALUES (?, CONCAT('Sua sugestão de resíduo "', ?, '" foi reprovada. Motivo: ', ?), 'cancelamento', NOW())
+                `;
+                connection.query(notifSql, [sug.id_usuario, sug.nome, motivo_reprovacao || 'Não especificado'], () => {
+                    notifyUsersWS([sug.id_usuario], { type: 'notification_update' });
+                });
+            }
+
+            res.json({ mensagem: `Sugestão atualizada para ${status}.` });
+        });
+    });
+});
+
 ////////////////////
 // EXCLUSIVE MODS //
 ////////////////////
@@ -1135,4 +1288,24 @@ app.delete('/servicos/flush', (req, res) => {
 
 server.listen(3000, () => {
     console.log('Servidor rodando na porta 3000');
+});
+
+// Add/Remove points
+app.post('/usuarios/:id/pontos', (req, res) => {
+    const { id } = req.params;
+    const { pontos } = req.body; // Ex: { "pontos": 50 } or { "pontos": -10 }
+
+    if (pontos === undefined || isNaN(pontos)) {
+        return res.status(400).json({ mensagem: 'Informe um valor válido para os pontos.' });
+    }
+
+    updateUserPoints(id, Number(pontos), (err, result) => {
+        if (err) {
+            return res.status(500).json({ mensagem: 'Erro ao atualizar pontos do usuário.' });
+        }
+        res.json({
+            mensagem: 'Pontos atualizados com sucesso!',
+            ...result
+        });
+    });
 });

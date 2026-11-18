@@ -41,6 +41,9 @@ CREATE TABLE USUARIO (
     bairro VARCHAR(100),
     foto_perfil VARCHAR(255),
     servicos_realizados INT(11) NOT NULL DEFAULT 0,
+    pontos INT(11) NOT NULL DEFAULT 0,
+    ranque VARCHAR(20) NOT NULL DEFAULT 'Bronze',
+    suspenso_ate DATETIME NULL,
     PRIMARY KEY (id_usuario),
     CONSTRAINT fk_usuario_categoria FOREIGN KEY (id_categoria) 
         REFERENCES CATEGORIA_USUARIO (id_categoria_usuario)
@@ -90,6 +93,7 @@ CREATE TABLE PARTICIPACAO (
     situacao VARCHAR(100),
     inscrito_em DATETIME,
     presenca ENUM('pendente', 'presente', 'ausente') NOT NULL DEFAULT 'pendente',
+    cancelado_em DATETIME NULL,
     PRIMARY KEY (id_participacao),
     CONSTRAINT fk_participacao_usuario FOREIGN KEY (id_usuario) 
         REFERENCES USUARIO (id_usuario)
@@ -123,6 +127,22 @@ CREATE TABLE MENSAGEM (
     CONSTRAINT fk_mensagem_conversa FOREIGN KEY (id_conversa) REFERENCES CONVERSA(id_conversa) ON DELETE CASCADE,
     CONSTRAINT fk_mensagem_remetente FOREIGN KEY (id_remetente) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
 );
+
+CREATE TABLE SUGESTAO_RESIDUO (
+    id_sugestao INT(11) NOT NULL AUTO_INCREMENT,
+    id_usuario INT(11) NOT NULL,
+    nome VARCHAR(88) NOT NULL,
+    tipo VARCHAR(50) NOT NULL,
+    observacoes VARCHAR(80),
+    foto_residuos TEXT,
+    status ENUM('pending', 'approved', 'disapproved') NOT NULL DEFAULT 'pending',
+    motivo_reprovacao TEXT NULL,
+    criada_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_sugestao),
+    CONSTRAINT fk_sugestao_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES USUARIO (id_usuario)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
  
 INSERT INTO CATEGORIA_USUARIO (nome_categoria) VALUES ('Comum');
 ```

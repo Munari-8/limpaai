@@ -1,16 +1,20 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, Modal, TouchableOpacity, FlatList, Dimensions, TouchableWithoutFeedback } from "react-native";
+import { StyleSheet, View, Text, Modal, TouchableOpacity, FlatList, Dimensions, TouchableWithoutFeedback, ScrollView } from "react-native";
 
 // Expo
 import { Image } from "expo-image";
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 // Local
 import { Colors, Fonts } from "../Theme";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-export default function WastePopUp({ visible, onClose, name, type, description, currentState, why }) {
+export default function WastePopUp({ visible, onClose, name, type, description, currentState, why, images = [] }) {
+    // "Não Reciclável" chega do banco como "nao reciclavel" (com espaço),
+    // então normaliza tudo pra minúsculo e sem espaço antes de procurar nos mapas.
+    const typeKey = String(type || '').toLowerCase().replace(/\s+/g, '');
+
     // Define a cor baseado no tipo do resíduo
     const mappingColor = {
         vidro: Colors.vidro,
@@ -18,9 +22,10 @@ export default function WastePopUp({ visible, onClose, name, type, description, 
         plastico: Colors.plastico,
         papel: Colors.papel,
         organico: Colors.organico,
+        naoreciclavel: Colors.naoReciclavel
     };
 
-    const color = mappingColor[type] || Colors.naoReciclavel;
+    const color = mappingColor[typeKey] || Colors.naoReciclavel;
 
     // Define o ícone baseado no tipo do resíduo
     const mappingIcon = {
@@ -29,10 +34,10 @@ export default function WastePopUp({ visible, onClose, name, type, description, 
         plastico: 'bottle-soda',
         papel: 'package-variant-closed',
         organico: 'food-apple',
-        naoReciclavel: 'delete-off'
+        naoreciclavel: 'delete-off'
     }
 
-    const typeIcon = mappingIcon[type];
+    const typeIcon = mappingIcon[typeKey];
 
     // Formata a escrita do tipo do resíduo
     const mappingType = {
@@ -41,20 +46,31 @@ export default function WastePopUp({ visible, onClose, name, type, description, 
         plastico: 'Plástico',
         papel: 'Papel',
         organico: 'Orgânico',
-        naoReciclavel: 'Não Reciclável'
+        naoreciclavel: 'Não Reciclável'
     };
 
-    const formattedType = mappingType[type];
+    const formattedType = mappingType[typeKey];
 
     // Controle das imagens
     const [activeIndex, setActiveIndex] = useState(null);
-    const [imageSize, setImageSize] = useState({})
+    const [imageSize, setImageSize] = useState({});
 
-    const images = [
-        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxMLLIm-K9jJ8xaJ0GZXNfbfs5CwtanGKzXbDzQGoK1hzK7dUPU9TnOHvE&s=10',
-        'https://cloudfront-us-east-1.images.arcpublishing.com/estadao/THWRKLGVOVEZVC5D4Q3UD2K3VM.jpg',
-        'https://futebolatino.com.br/wp-content/uploads/2023/11/Suarez-Gremio.jpg'
-    ];
+    // Miniatura clicável que abre a imagem em tela cheia
+    const renderThumb = (idx, touchStyle, placeholder) => (
+        <TouchableOpacity
+            key={idx}
+            style={touchStyle}
+            onPress={() => setActiveIndex(idx)}
+        >
+            <Image
+                source={images[idx]}
+                placeholder={placeholder}
+                style={styles.fill}
+                contentFit='cover'
+                placeholderContentFit="cover"
+            />
+        </TouchableOpacity>
+    );
 
     return (
         <>
@@ -72,74 +88,98 @@ export default function WastePopUp({ visible, onClose, name, type, description, 
                 />
 
                 <View style={styles.container}>
-                    <Text style={styles.textTitle}>SUGESTÃO DE RESÍDUO</Text>
+                    <ScrollView
+                        style={styles.scrollContainer}
+                        contentContainerStyle={styles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        <Text style={styles.textTitle}>SUGESTÃO DE RESÍDUO</Text>
 
-                    <View style={{ alignItems: 'center', marginVertical: '2.5%' }}>
-                        <Text style={styles.textName}>{name}</Text>
+                        <View style={{ alignItems: 'center', marginVertical: '2.5%' }}>
+                            <Text style={styles.textName}>{name}</Text>
 
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <MaterialCommunityIcons
-                                name={typeIcon}
-                                size={24}
-                                color={color}
-                            />
-                            
-                            <Text style={[styles.textType, { color: color }]}>{formattedType}</Text>
-                        </View>
-                    </View>
-                    
-                    <Text style={styles.textDescription}>{description}</Text>
-
-                    <View style={styles.imageView}>
-                        <TouchableOpacity
-                            style={{ width: '66.66%', aspectRatio: 1 }}
-                            onPress={() => setActiveIndex(0)}
-                        >
-                            <Image
-                                source={images[0]}
-                                placeholder={require('../../assets/brokenImage200.svg')}
-                                style={{ width: '100%', height: '100%' }}
-                                contentFit='cover'
-                                placeholderContentFit="cover"
-                            />
-                        </TouchableOpacity>
-
-                        <View style={{ width: '33.33%' }}>
-                            <TouchableOpacity
-                                style={{ width: '100%', aspectRatio: 1 }}
-                                onPress={() => setActiveIndex(1)}
-                            >
-                                <Image
-                                    source={images[1]}
-                                    placeholder={require('../../assets/brokenImage400.svg')}
-                                    style={{ width: '100%', height: '100%' }}
-                                    contentFit='cover'
-                                    placeholderContentFit="cover"
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <MaterialCommunityIcons
+                                    name={typeIcon}
+                                    size={24}
+                                    color={color}
                                 />
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={{ width: '100%', aspectRatio: 1 }}
-                                onPress={() => setActiveIndex(2)}
-                            >
-                                <Image
-                                    source={images[2]}
-                                    placeholder={require('../../assets/brokenImage400.svg')}
-                                    style={{ width: '100%', height: '100%' }}
-                                    contentFit='cover'
-                                    placeholderContentFit="cover"
-                                />
-                            </TouchableOpacity>
+                                
+                                <Text style={[styles.textType, { color: color }]}>{formattedType}</Text>
+                            </View>
                         </View>
-                    </View>
+                        
+                        <Text style={styles.textDescription}>{description}</Text>
 
-                    {currentState === 'disapproved' && (
-                        <View style={styles.why}>
-                            <Text style={styles.textResponse}>POR QUÊ?</Text>
+                        {images.length > 0 && (
+                            <View style={styles.imageView}>
+                                {images.length === 1 && renderThumb(
+                                    0,
+                                    { width: '100%', height: 200 },
+                                    require('../../assets/brokenImage200.svg')
+                                )}
 
-                            <Text style={styles.textWhy}>{why}</Text>
-                        </View>
-                    )}
+                                {images.length === 2 && images.map((_, idx) => renderThumb(
+                                    idx,
+                                    { flex: 1, height: 160 },
+                                    require('../../assets/brokenImage200.svg')
+                                ))}
+
+                                {images.length === 3 && (
+                                    <>
+                                        {renderThumb(
+                                            0,
+                                            { width: '66.66%', aspectRatio: 1 },
+                                            require('../../assets/brokenImage200.svg')
+                                        )}
+
+                                        <View style={{ width: '33.33%' }}>
+                                            {renderThumb(
+                                                1,
+                                                { width: '100%', aspectRatio: 1 },
+                                                require('../../assets/brokenImage400.svg')
+                                            )}
+                                            {renderThumb(
+                                                2,
+                                                { width: '100%', aspectRatio: 1 },
+                                                require('../../assets/brokenImage400.svg')
+                                            )}
+                                        </View>
+                                    </>
+                                )}
+
+                                {images.length >= 4 && images.slice(0, 4).map((_, idx) => (
+                                    <TouchableOpacity
+                                        key={idx}
+                                        style={{ width: '48.5%', aspectRatio: 1 }}
+                                        onPress={() => setActiveIndex(idx)}
+                                    >
+                                        <Image
+                                            source={images[idx]}
+                                            placeholder={require('../../assets/brokenImage200.svg')}
+                                            style={styles.fill}
+                                            contentFit='cover'
+                                            placeholderContentFit="cover"
+                                        />
+
+                                        {idx === 3 && images.length > 4 && (
+                                            <View style={styles.moreOverlay}>
+                                                <Text style={styles.moreText}>+{images.length - 4}</Text>
+                                            </View>
+                                        )}
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
+
+                        {currentState === 'disapproved' && (
+                            <View style={styles.why}>
+                                <Text style={styles.textResponse}>POR QUÊ?</Text>
+
+                                <Text style={styles.textWhy}>{why}</Text>
+                            </View>
+                        )}
+                    </ScrollView>
                 </View>
             </View>
         </Modal>
@@ -160,7 +200,7 @@ export default function WastePopUp({ visible, onClose, name, type, description, 
                     initialScrollIndex={activeIndex}
                     getItemLayout={(data, index) => ({
                         length: screenWidth,
-                        offset: screenHeight * index,
+                        offset: screenWidth * index,
                         index
                     })}
                     keyExtractor={(item, index) => index.toString()}
@@ -182,12 +222,12 @@ export default function WastePopUp({ visible, onClose, name, type, description, 
                                         <View style={boxStyle}>
                                             <Image
                                                 source={item}
-                                                style={{ width: '100%', height: '100%' }}
+                                                style={styles.fill}
                                                 contentFit="contain"
                                                 onLoad={(event) => {
                                                     const { width, height } = event.source;
 
-                                                    if( !dims) {
+                                                    if (!dims) {
                                                         const scale = Math.min(screenWidth / width, screenHeight / height);
                                                         setImageSize(prev => ({
                                                             ...prev,
@@ -233,18 +273,40 @@ const styles = StyleSheet.create({
         width: '85%',
         maxHeight: '85%',
 
-        padding: '5%',
-        alignItems: 'center',
         overflow: 'hidden'
+    },
+    scrollContainer: {
+        width: '100%'
+    },
+    scrollContent: {
+        padding: '5%',
+        alignItems: 'center'
     },
     imageView: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
         width: '100%',
         
         marginTop: '5%',
 
         borderRadius: 24,
         overflow: 'hidden'
+    },
+    fill: {
+        width: '100%',
+        height: '100%'
+    },
+    moreOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     fullscreenContainer: {
         flex: 1,
@@ -294,5 +356,10 @@ const styles = StyleSheet.create({
         fontSize: 14,
 
         textAlign: 'center'
+    },
+    moreText: {
+        color: '#fff',
+        fontFamily: Fonts.bold,
+        fontSize: 18
     }
 })

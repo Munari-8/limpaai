@@ -18,6 +18,8 @@ export default function HomeScreen({ navigation }) {
     const [tasks, setTasks] = useState([]);
     const [servicosRealizados, setServicosRealizados] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [rank, setRank] = useState('Bronze');
+    const [points, setPoints] = useState(0);
 
     const username = user?.nome_exibicao || (user?.nome ? user.nome.trim().split(/\s+/)[0] : 'usuário');
     const usernameTitle = username.toUpperCase();
@@ -40,6 +42,13 @@ export default function HomeScreen({ navigation }) {
             break;
     }
 
+    const rankColors = {
+        Bronze: Colors.bronze,
+        Prata: Colors.silver,
+        Ouro: Colors.gold,
+        Diamante: Colors.diamond
+    };
+
     const loadHomeData = async () => {
         if (!user?.id) return;
         try {
@@ -47,8 +56,15 @@ export default function HomeScreen({ navigation }) {
             // Busca dados atualizados do usuário (incluindo serviços realizados)
             const userRes = await fetch(`${API_URL}/usuarios/${user.id}`);
             const userData = await userRes.json();
+            
             if (userRes.ok && userData.servicos_realizados !== undefined) {
                 setServicosRealizados(userData.servicos_realizados);
+
+                if (userRes.ok) {
+                    if (userData.servicos_realizados !== undefined) setServicosRealizados(userData.servicos_realizados);
+                    if (userData.ranque) setRank(userData.ranque);
+                    if (userData.pontos !== undefined) setPoints(userData.pontos);
+                }
             }
 
             // Busca todos os serviços abertos
@@ -100,7 +116,9 @@ export default function HomeScreen({ navigation }) {
                             {servicosRealizados === 1 ? 'Serviço realizado' : 'Serviços realizados'}
                         </Text>
 
-                        <Text style={styles.rank}>Ranque</Text>
+                        <Text style={[styles.rank, { backgroundColor: rankColors[rank] || Colors.background }]}>
+                            {rank} • {points} pts
+                        </Text>
                         
                         <Button
                             text={'Editar perfil'}
